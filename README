@@ -1,0 +1,7 @@
+Abbreviations:
+Conic cut library, depends on cgl.
+
+CglConicMIR: Implements conic mir cuts by atamturk and narayanan.
+CglConicGD1: General disjucntion 1, implements disjunctive cuts by Belotti et al.
+CglConicGD2: General disjucntion 2, implements disjunctive cuts by Karzan and Yildiz.
+

@@ -10,6 +10,8 @@
 
 #ifndef CglConicMIR_H
 #define CglConicMIR_H
+// CCGL headers
+#include "CglConicMIRParam.hpp"
 // CGL headers
 #include "CglCutGenerator.hpp"
 // STDLIB headers
@@ -20,12 +22,16 @@ class CglConicMIR: public CglCutGenerator {
 public:
   // default constructor
   CglConicMIR();
+  // copy constructor
+  CglConicMIR(const CglConicMIR & other);
+  // copy assignment operator
+  CglConicMIR & operator=(const CglConicMIR & rhs);
   /// Destructor
   virtual ~CglConicMIR();
   // Set the parameters
   void setParam(const CglConicMIRParam & param);
   // Return parameter object
-  CglConicMIRParam getParam() const {return param_;}
+  CglConicMIRParam * getParam() const {return param_;}
   // Virtual functions
   virtual void generateCuts( const OsiSolverInterface & si, OsiCuts & cs,
 			     const CglTreeInfo info = CglTreeInfo());

@@ -40,6 +40,11 @@
 // CGL headers
 #include "CglKnapsackCover.hpp"
 #include "CglSimpleRounding.hpp"
+#include "CglGMI.hpp"
+#include "CglGomory.hpp"
+#include "CglMixedIntegerRounding.hpp"
+#include "CglMixedIntegerRounding2.hpp"
+// Conic CGL headers
 #include "CglConicMIR.hpp"
 
 using std::cerr;
@@ -91,7 +96,7 @@ int main(int argc, const char *argv[])
 
   try {
     // Instantiate a specific solver interface
-    OsiConicSolverInterface * si = ColaModel();
+    OsiConicSolverInterface * si = new ColaModel();
     // Read file describing problem
     si->readMps(mpsFileName.c_str(),"mps");
     // Set objective min to max
@@ -103,7 +108,7 @@ int main(int argc, const char *argv[])
     // Solve continuous problem
     si->initialSolve();
     // Original number of rows (so we can take off inactive cuts)
-    int numberRows = si.getNumRows();
+    int numberRows = si->getNumRows();
     // Save the orig lp/soco relaxation value for
     // comparisons later
     double origLpObj = si->getObjValue();
@@ -112,7 +117,11 @@ int main(int argc, const char *argv[])
     // Instantiate cut generators
     CglKnapsackCover cg1;
     CglSimpleRounding cg2;
-    CglConicMIR cg3;
+    CglGMI cg3;
+    CglGomory cg4;
+    CglMixedIntegerRounding cg5;
+    CglMixedIntegerRounding2 cg6;
+    CglConicMIR cg7;
     //---------------------------------------------------
     // Keep applying cuts until
     //   1. no more cuts are generated
@@ -128,9 +137,14 @@ int main(int argc, const char *argv[])
       obj = si->getObjValue();
       // Generate and apply cuts
       OsiConicCuts cuts;
-      cg1.generateCuts(si,cuts);
-      cg2.generateCuts(si,cuts);
-      cg3.generateCuts(si,cuts);
+      OsiSolverInterface * ssi = dynamic_cast<OsiSolverInterface*>(si);
+      // cg1.generateCuts(*ssi,cuts);
+      // cg2.generateCuts(*ssi,cuts);
+      // cg3.generateCuts(*ssi,cuts);
+      // cg4.generateCuts(*ssi,cuts);
+      // cg5.generateCuts(*ssi,cuts);
+      // cg6.generateCuts(*ssi,cuts);
+      cg7.generateCuts(*si,cuts);
       acRc = si->applyCuts(cuts,0.0);
       // Print applyCuts return code
       cout <<endl <<endl;

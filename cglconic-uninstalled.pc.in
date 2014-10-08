@@ -1,0 +1,11 @@
+prefix=@prefix@
+libdir=@prefix@/lib
+includedir=@prefix@/include
+
+Name: CCGL
+Description: Conic cut generation library
+URL:
+Version: @PACKAGE_VERSION@
+Libs: -L${libdir} -lCglConic
+Cflags: -I${includedir}
+Requires: cgl osiconic osi-clp osi coinutils
