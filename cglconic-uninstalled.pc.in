@@ -1,11 +1,10 @@
 prefix=@prefix@
-libdir=@prefix@/lib
-includedir=@prefix@/include
+libdir=@ABSBUILDDIR@/src
 
 Name: CCGL
-Description: Conic cut generation library
-URL:
+Description: Conic Cut Generation Library
+URL: https://github.com/aykutbulut/CGL-CONIC
 Version: @PACKAGE_VERSION@
-Libs: -L${libdir} -lCglConic
-Cflags: -I${includedir}
-Requires: cgl osiconic osi-clp osi coinutils
+Libs: ${libdir}/libCglConic.la @CGLCONICLIB_PCLIBS@
+Cflags: -I@abs_source_dir@/src -I@ABSBUILDDIR@/src
+Requires: @CGLCONICLIB_PCREQUIRES@
