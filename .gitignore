@@ -1,3 +1,5 @@
+# autotools auxilary files
+*.m4
 /autom4te.cache
 /compile
 /stamp-h1
