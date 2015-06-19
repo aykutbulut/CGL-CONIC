@@ -133,6 +133,13 @@ for file in `ls */Makefile.in`; do
 done
 cd $curr_dir
 
+##############################################################################
+#                   VPATH links for example input files                      #
+##############################################################################
+# In case this is a VPATH configuration we need to make sure that the
+# input files for the examples are available in the VPATH directory.
+AC_COIN_VPATH_LINK(examples/ex1.mps)
+
 #############################################################################
 #                  Check for doxygen                                        #
 #############################################################################
@@ -149,6 +156,7 @@ dnl AC_COIN_VPATH_LINK([test/CglTestData/capPlan1.mps test/CglTestData/l152lav.m
 # Here list all the files that configure should create (except for the
 # configuration header file)
 AC_CONFIG_FILES([Makefile
+		 examples/Makefile
                  src/Makefile
                  src/CglConicGD1/Makefile
                  src/CglConicGD2/Makefile
