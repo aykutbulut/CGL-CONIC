@@ -30,6 +30,9 @@
 /* Define to 1 if the CoinUtils package is available */
 #undef COIN_HAS_COINUTILS
 
+/* Define to 1 if the Cola package is available */
+#undef COIN_HAS_COLA
+
 /* If defined, the LAPACK Library is available. */
 #undef COIN_HAS_LAPACK
 

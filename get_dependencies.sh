@@ -12,5 +12,7 @@ svn co https://projects.coin-or.org/svn/Osi/stable/0.107/Osi
 svn co https://projects.coin-or.org/svn/Cgl/releases/0.59.5/Cgl
 # get coin-or clp
 svn co https://projects.coin-or.org/svn/Clp/stable/1.16/Clp
+# get cola
+git clone https://github.com/aykutbulut/COLA
 # get osiconic
 git clone https://github.com/aykutbulut/OSI-CONIC OsiConic

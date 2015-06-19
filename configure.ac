@@ -80,6 +80,10 @@ AC_COIN_CHECK_PACKAGE(Cgl,  [cgl],  [CglConicLib])
 if test $coin_has_cgl != yes ; then
   AC_MSG_ERROR([Required package Cgl not available.])
 fi
+AC_COIN_CHECK_PACKAGE(Cola,  [cola],  [CglConicLib])
+if test $coin_has_cola != yes ; then
+  AC_MSG_ERROR([Required package Cola not available.])
+fi
 dnl AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
 
 AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)

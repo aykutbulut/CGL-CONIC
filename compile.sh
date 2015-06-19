@@ -37,6 +37,12 @@ cd Cgl
 ../../Cgl/configure --prefix=$build_dir
 make -j 10 install
 cd ..
+# configurea and install Cola
+mkdir Cola
+cd Cola
+../../Cola/configure --prefix=$build_dir
+make -j 10 install
+cd ..
 # configure and install CglConic
 mkdir CglConic
 cd CglConic

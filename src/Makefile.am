@@ -42,7 +42,8 @@ libCglConic_la_DEPENDENCIES = $(CGLCONIC_SUBLIBS)
 AM_CPPFLAGS = $(COINUTILS_CFLAGS)\
 	      $(OSI_CFLAGS)\
 	      $(OSICONIC_CFLAGS)\
-	      $(CGL_CFLAGS)
+	      $(CGL_CFLAGS)\
+	      $(COLA_CFLAGS)
 
 # This line is necessary to allow VPATH compilation
 DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
