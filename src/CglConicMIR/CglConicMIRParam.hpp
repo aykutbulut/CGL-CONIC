@@ -1,9 +1,14 @@
 #ifndef CglConicMIRParam_H
 #define CglConicMIRParam_H
 
-#include "CglParam.hpp"
+#include "CglConicParam.hpp"
 
-class CglConicMIRParam : public CglParam {
+// How to choose cone to generate cut.
+// How to choose the row ro generate cut.
+// What happens if the cone is in canonical form?
+//
+
+class CglConicMIRParam : public CglConicParam {
 public:
   // constructor
   CglConicMIRParam();
@@ -24,6 +29,8 @@ public:
   // virtual void setEPS_COEFF(const double eps_c);
   // /** Set MAX_SUPPORT */
   // virtual void setMAX_SUPPORT(const int max_s);
+private:
+
 };
 
 #endif
