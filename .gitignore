@@ -4,7 +4,6 @@
 /compile
 /stamp-h1
 
-*.mps
 *.o
 *.gz
 *.int
@@ -45,3 +44,4 @@
 /Data/*
 /ThirdParty/*
 /Cgl/*
+/Cola/*
