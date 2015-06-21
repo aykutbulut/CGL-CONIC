@@ -30,6 +30,10 @@ class CglConicGD1: public CglConicCutGenerator {
   // get Ax=b
   void get_rows(int cut_cone, int & num_eq_rows, int *& rows);
   void add_cut(CglConicGD1Cut * cut);
+  // adds generated cuts to the model.
+  void add_cuts();
+  // frees memory
+  void clear_cuts();
   // compute disjunction var and the cone var is in.
   std::vector<std::pair<int, int> > compute_dis_var_cone(int & dis_var,
 							 int & dis_cone) const;

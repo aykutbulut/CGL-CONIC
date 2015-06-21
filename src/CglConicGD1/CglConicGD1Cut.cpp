@@ -45,7 +45,6 @@ CglConicGD1Cut::CglConicGD1Cut(OsiConicSolverInterface const * solver,
   std::copy(rows, rows+num_rows, rows_);
   cindex_ = cut_cone;
   // set arrays to 0
-  rows_ = 0;
   matA_ = 0;
   matH_ = 0;
   matV_ = 0;
@@ -231,10 +230,10 @@ void CglConicGD1Cut::compute_matrixA() {
 void CglConicGD1Cut::compute_matrixH() {
   int num_cols = csize_;
   //Copy A to a working array
-  double * tempA =  new double [num_cols*num_rows_];
+  double * tempA = new double[num_cols*num_rows_];
   cblas_dcopy(num_cols*num_rows_, matA_, 1, tempA, 1);
   //Right hand side singular vectors of A
-  double * VT = new double [num_cols*num_cols];
+  double * VT = new double[num_cols*num_cols];
   svDecompICL(num_rows_, num_cols, tempA, VT);
   matH_ = new double[(num_cols-num_rows_)*num_cols]();
   // Take the last n-m columns of V, lapack returns V^T
@@ -242,8 +241,8 @@ void CglConicGD1Cut::compute_matrixH() {
     //cblas_dcopy(num_cols, (VT + num_rows_ + i), num_cols, (matH_+i*num_cols), 1);
     cblas_dcopy(num_cols, (VT+num_rows_+i), num_cols, (matH_+i*num_cols), 1);
   }
-  delete [] tempA;
-  delete [] VT;
+  delete[] tempA;
+  delete[] VT;
   // change matH_ to col order
   // double * tempH new double[(num_cols-num_rows_)*num_cols];
   // cblas_dcopy((num_cols-num_rows_)*num_cols, matH_, 1, tempH, 1);
@@ -850,7 +849,7 @@ static void svDecompICL(int m, int n, double * A, double * VT){
   /* Compute all the rows of VT */
   char jobvt = 'A';
   int lda = m; //Leading dimension of A
-  double * s = new double[m]; //Singular values of A
+  double * s = (double *) malloc(m*sizeof(double)); //Singular values of A
   //We are not computing U, so not need to assign memory
   double * u = NULL;
   int ldu = 1;
@@ -866,13 +865,13 @@ static void svDecompICL(int m, int n, double * A, double * VT){
           VT, &ldvt, &worksize, &lwork, &info);
   // Initilize the working space needed by lapack
   lwork = (int) worksize;
-  double * work = new double[lwork];
+  double * work = (double *) malloc(lwork*sizeof(double));
   //   printf("fails Singular computing\n");
   // Here is where the actually computation is happening
   dgesvd_(&jobu, &jobvt, &m, &n, A, &lda, s, u, &ldu,
           VT, &ldvt, work, &lwork, &info);
-  delete[] work;
-  delete[] s;
+  free(work);
+  free(s);
 }
 
 // solve symmetric system Ax=b

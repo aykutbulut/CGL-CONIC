@@ -40,9 +40,9 @@ CglConicGD1::~CglConicGD1() {
   if (param_)
     delete param_;
   std::vector<CglConicGD1Cut*>::iterator it;
-  // for (it=cuts_.begin(); it!=cuts_.end(); ++it) {
-  //   delete *it;
-  // }
+  for (it=cuts_.begin(); it!=cuts_.end(); ++it) {
+    delete (*it);
+  }
   cuts_.clear();
 }
 
@@ -95,13 +95,30 @@ void CglConicGD1::generateAndAddCuts(OsiConicSolverInterface & si,
 					      cut_cone, dis_var);
     num_cuts_++;
     cuts_.push_back(cut);
-    add_cut(cut);
+    //add_cut(cut);
     delete[] rows;
-    //break;
   }
+  add_cuts();
+  // clear cuts after adding them
+  clear_cuts();
   //std::copy(cut_row.begin(), cut_row.end(), cut_row_in);
   // once we determined the cut row, we can generate cut using any cone and
   // any cone member we want.
+}
+
+void CglConicGD1::clear_cuts() {
+  std::vector<CglConicGD1Cut*>::iterator it;
+  for (it=cuts_.begin(); it!=cuts_.end(); ++it) {
+    delete (*it);
+  }
+  cuts_.clear();
+}
+
+void CglConicGD1::add_cuts() {
+  std::vector<CglConicGD1Cut*>::const_iterator it;
+  for (it=cuts_.begin(); it!=cuts_.end(); ++it) {
+    add_cut(*it);
+  }
 }
 
 // when is cut invalid? (1) when no hyperplane intersects quadric.
