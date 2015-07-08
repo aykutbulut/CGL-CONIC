@@ -68,10 +68,11 @@ CglConicGD1Cut::CglConicGD1Cut(OsiConicSolverInterface const * solver,
   // fill csize_, cmembers_, cone_members_, ctype_, lctype_,
   solver_->getConicConstraint(cut_cone, lctype_, csize_, cmembers_);
   ctype_ = OSI_LORENTZ;
-  // cone_members_ = new int[csize_]();
-  // for (int i=0; i<csize_; ++i) {
-  //   cone_members_[cmembers_[i]] = 1;
-  // }
+  int num_cols = solver->getNumCols();
+  cone_members_ = new int[num_cols]();
+  for (int i=0; i<csize_; ++i) {
+    cone_members_[cmembers_[i]] = 1;
+  }
   // todo(aykut) check if csize_ is same as num_rows_
   // I do not know what to do in this case
   if (num_rows_>=csize_) {
@@ -197,33 +198,39 @@ void CglConicGD1Cut::classify_quadric() {
 }
 
 void CglConicGD1Cut::compute_matrixA() {
-  // todo(aykut) num_cols is same as cone size. hence cone_members_ becomes irrelevant
-  int num_cols = solver_->getNumCols();
-  // todo(aykut) we may not need this
-  cone_members_ = new int[num_cols]();
-  for (int i=0; i<csize_; ++i) {
-    cone_members_[cmembers_[i]] = 1;
-  }
+  // we assume cmembers_ and rows_ are ordered.
+  // matA_ has num_rows_ many rows and csize_ many columns.
+  // matA_ is column ordered
   matA_ = new double[num_rows_*csize_]();
-  // get matrix A in col ordered form
-  // cols are ordered as in original matrix
+  // rows_ stores the indices of the picked rows of constraint matrix
+  // cmembers_ stores the indices of the picked rows of constraint matrix
+  int nc = solver_->getNumCols();
+  int nr = solver_->getNumRows();
+  int * row_members = new int[nr]();
+  for (int i=0; i<num_rows_; i++) {
+    row_members[rows_[i]] = 1;
+  }
+  // cone_members_ is filled in constructor
   CoinPackedMatrix const * mat = solver_->getMatrixByCol();
   int const * indices = mat->getIndices();
   double const * elements = mat->getElements();
-  for (int i=0; i<num_cols; ++i) {
-    // for each column i
-    // if column is not a member of the cone, skip
-    if (cone_members_[i]==0)
-      continue;
-    // some columns are all zero, ie first is same as last.
-    int first = mat->getVectorFirst(i);
-    int last = mat->getVectorLast(i);
-    for (int j=first; j<last; ++j) {
-      if (indices[j]>num_rows_)
-	break;
-      matA_[i*num_rows_+indices[j]] = elements[j];
+  // reduced row index
+  int rri = 0;
+  // reduced column index
+  int rci = 0;
+  for (int i=0; i<nc; ++i) {
+    if (cone_members_[i]==1) {
+      for (int j=0; j<nr; ++j) {
+	if (row_members[j]==1) {
+	  matA_[rci*num_rows_+rri] = mat->getCoefficient(j,i);
+	  rri++;
+	}
+      }
+      rri = 0;
+      rci++;
     }
   }
+  delete[] row_members;
 }
 
 // compute matrix H from matrix A, H is null mat of A.
@@ -526,8 +533,9 @@ void CglConicGD1Cut::compute_new_rhs() {
     //todo(aykut) understand the direction test. What are we testing?
     // why are we testing, what are dirTestV_ and dirTestU_?
     //Matrix times vector Q^(-1)q
-    if (dirTestV_ != 0)
-      delete [] dirTestV_;
+    if (dirTestV_ != 0) {
+      delete[] dirTestV_;
+    }
     dirTestV_ = new double [n]();
     cblas_dcopy (n, matV_, 1, dirTestV_, 1);
     double dirtest = cblas_ddot(n, dirTestV_, 1, dirTestU_, 1);

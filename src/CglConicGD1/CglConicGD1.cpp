@@ -39,9 +39,9 @@ CglConicGD1 & CglConicGD1::operator=(const CglConicGD1 & rhs) {
 CglConicGD1::~CglConicGD1() {
   if (param_)
     delete param_;
-  std::vector<CglConicGD1Cut*>::iterator it;
-  for (it=cuts_.begin(); it!=cuts_.end(); ++it) {
-    delete (*it);
+  int size = cuts_.size();
+  for (int i=0; i<size; ++i) {
+    delete cuts_[i];
   }
   cuts_.clear();
 }
@@ -61,7 +61,6 @@ void CglConicGD1::generateCuts(const OsiConicSolverInterface & si,
 void CglConicGD1::generateAndAddCuts(OsiConicSolverInterface & si,
 				     const CglTreeInfo info) {
   solver_ = &si;
-  cuts_.clear();
   // decide disjunction var and cut cone
   int dis_var;
   int cut_cone;
@@ -94,7 +93,13 @@ void CglConicGD1::generateAndAddCuts(OsiConicSolverInterface & si,
     CglConicGD1Cut * cut = new CglConicGD1Cut(solver_, num_eq_rows, rows,
 					      cut_cone, dis_var);
     num_cuts_++;
-    cuts_.push_back(cut);
+    if(!cut->valid()) {
+      std::cerr << "Generated cut is not valid." << std::endl;
+      delete cut;
+    }
+    else {
+      cuts_.push_back(cut);
+    }
     //add_cut(cut);
     delete[] rows;
   }
@@ -107,9 +112,9 @@ void CglConicGD1::generateAndAddCuts(OsiConicSolverInterface & si,
 }
 
 void CglConicGD1::clear_cuts() {
-  std::vector<CglConicGD1Cut*>::iterator it;
-  for (it=cuts_.begin(); it!=cuts_.end(); ++it) {
-    delete (*it);
+  int size = cuts_.size();
+  for (int i=0; i<size; ++i) {
+    delete cuts_[i];
   }
   cuts_.clear();
 }
@@ -192,7 +197,7 @@ void CglConicGD1::add_cone_form_cut(CglConicGD1Cut * cut) {
         num_elem++;
       }
     }
-    // add row
+    // add col
     solver_->addCol(num_elem, ind, val, -solver_->getInfinity(),
                     solver_->getInfinity(), 0.0);
     num_elem = 0;

@@ -1,9 +1,9 @@
 #ifndef CglConicGD2Param_H
 #define CglConicGD2Param_H
 
-#include "CglParam.hpp"
+#include "CglConicParam.hpp"
 
-class CglConicGD2Param : public CglParam {
+class CglConicGD2Param : public CglConicParam {
 public:
   // constructor
   CglConicGD2Param();
