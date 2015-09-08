@@ -165,6 +165,7 @@ AC_CONFIG_FILES([Makefile
                  src/CglConicGD1/Makefile
                  src/CglConicGD2/Makefile
                  src/CglConicMIR/Makefile
+                 src/CglConicOA/Makefile
                  cglconic.pc
                  cglconic-uninstalled.pc])
 AC_CONFIG_FILES([doxydoc/doxygen.conf])
