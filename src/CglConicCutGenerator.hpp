@@ -44,7 +44,7 @@ public:
   // generate linear/ordinary cuts.
   virtual void generateCuts(const OsiConicSolverInterface & si,
 			    OsiCuts & cs,
-			    const CglTreeInfo info = CglTreeInfo()) = 0;
+			    const CglTreeInfo info = CglTreeInfo());
   int aggressiveness() const;
   void setAggressiveness(int value);
   // set whether can do global cuts
