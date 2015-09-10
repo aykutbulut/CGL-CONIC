@@ -20,12 +20,25 @@
 #include <string>
 
 // generate cuts using the current solution stored in the solver interface.
-class CglConicGD1: public CglConicCutGenerator {
+class CglConicOA: public CglConicCutGenerator {
   CglConicOAParam * param_;
-  OsiConicSolverInterface * solver_;
+  // private functions
+  // return 0 if sol is infeasible for the cone, nonzero otherwise
+  int generate_support(int size, OsiLorentzConeType type,
+                       int const * members,
+                       double const * sol,
+                       OsiRowCut * rc) const;
+  int generate_support_lorentz(int size,
+                               int const * members,
+                               double const * sol,
+                               OsiRowCut * rc) const;
+  int generate_support_rotated_lorentz(int size,
+                                       int const * members,
+                                       double const * sol,
+                                       OsiRowCut * rc) const;
 public:
   // default constructor
-  CglConicOA(OsiConicSolverInterface * solver);
+  CglConicOA();
   // copy constructor
   CglConicOA(const CglConicOA & other);
   // copy assignment operator
@@ -36,9 +49,9 @@ public:
   void setParam(const CglConicOAParam & param);
   // Return parameter object
   CglConicOAParam * getParam() const {return param_;}
-  // Virtual functions
-  virtual void generateCuts(const OsiConicSolverInterface & si,
-			    OsiCuts & cuts,
+  // generate linear/ordinary cuts.
+  virtual void generateCuts(OsiConicSolverInterface const & si,
+			    OsiCuts & cs,
 			    const CglTreeInfo info = CglTreeInfo());
   /// Return true if needs optimal basis to do cuts
   virtual bool needsOptimalBasis() const { return false; }
@@ -46,12 +59,6 @@ public:
   virtual CglConicCutGenerator * clone() const;
   /// Create C++ lines to get to current state
   virtual std::string generateCpp( FILE * fp);
-  // generate linear/ordinary cuts.
-  virtual void generateCuts(const OsiConicSolverInterface & si,
-			    OsiCuts & cs,
-			    const CglTreeInfo info = CglTreeInfo());
-  // return pointer to solver
-  OsiConicSolverInterface * solver() const;
 };
 
 #endif
