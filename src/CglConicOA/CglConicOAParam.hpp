@@ -1,5 +1,5 @@
-#ifndef CglConicGD1Param_H
-#define CglConicGD1Param_H
+#ifndef CglConicOAParam_H
+#define CglConicOAParam_H
 
 #include "CglConicParam.hpp"
 
@@ -7,16 +7,16 @@
 // How to choose the row to generate cut.
 //
 
-class CglConicGD1Param : public CglConicParam {
+class CglConicOAParam : public CglConicParam {
 public:
   // constructor
-  CglConicGD1Param();
+  CglConicOAParam();
   // copy constructor
-  CglConicGD1Param(const CglConicGD1Param & other);
+  CglConicOAParam(const CglConicOAParam & other);
   // copy assignment operator
-  CglConicGD1Param & operator=(const CglConicGD1Param & other);
+  CglConicOAParam & operator=(const CglConicOAParam & other);
   // destructor
-  virtual ~CglConicGD1Param();
+  virtual ~CglConicOAParam();
   // Virtual functions inherited.
   /// Clone
   virtual CglParam * clone() const;

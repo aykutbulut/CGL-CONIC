@@ -1,29 +1,29 @@
-#include "CglConicGD1Param.hpp"
+#include "CglConicOAParam.hpp"
 #include <iostream>
 #include <exception>
 
 // constructor
-CglConicGD1Param::CglConicGD1Param() {
+CglConicOAParam::CglConicOAParam() {
 }
 
 // copy constructor
-CglConicGD1Param::CglConicGD1Param(const CglConicGD1Param & other) {
+CglConicOAParam::CglConicOAParam(const CglConicOAParam & other) {
 }
 
 // copy assignment operator
-CglConicGD1Param & CglConicGD1Param::operator=(
-		       const CglConicGD1Param & other) {
+CglConicOAParam & CglConicOAParam::operator=(
+		       const CglConicOAParam & other) {
   std::cerr << "operator= is not implemented yet!" << std::endl;
   throw std::exception();
   return *this;
 }
 
 // destructor
-CglConicGD1Param::~CglConicGD1Param() {
+CglConicOAParam::~CglConicOAParam() {
 }
 
 /// Clone
-CglParam * CglConicGD1Param::clone() const {
-  CglParam * par = new CglConicGD1Param(*this);
+CglParam * CglConicOAParam::clone() const {
+  CglParam * par = new CglConicOAParam(*this);
   return par;
 }
