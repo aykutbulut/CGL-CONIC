@@ -40,7 +40,7 @@ public:
   // generate cuts
   virtual void generateCuts(const OsiConicSolverInterface & si,
 			    OsiConicCuts & cs,
-			    const CglTreeInfo info = CglTreeInfo()) = 0;
+			    const CglTreeInfo info = CglTreeInfo());
   // generate linear/ordinary cuts.
   virtual void generateCuts(const OsiConicSolverInterface & si,
 			    OsiCuts & cs,
