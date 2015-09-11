@@ -1,0 +1,2 @@
+Generates linear cuts that approximates the conic constraints.
+This library is to be used in outer approximation algorithm.
