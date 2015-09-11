@@ -53,6 +53,10 @@ public:
   virtual void generateCuts(OsiConicSolverInterface const & si,
 			    OsiCuts & cs,
 			    const CglTreeInfo info = CglTreeInfo());
+  // generate cuts for a linear solver interface
+  void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
+                    int num_cones, OsiLorentzConeType const * cone_type,
+                    int const * cone_size, int const * const * members);
   /// Return true if needs optimal basis to do cuts
   virtual bool needsOptimalBasis() const { return false; }
   /// Clone

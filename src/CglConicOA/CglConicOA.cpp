@@ -63,6 +63,24 @@ void CglConicOA::generateCuts(OsiConicSolverInterface const & si,
   }
 }
 
+// generate cuts for a linear solver interface
+void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
+                  int num_cones, OsiLorentzConeType const * cone_type,
+                  int const * cone_size, int const * const * members) {
+  // get solution
+  double const * sol = si.getColSolution();
+  for (int i=0; i<num_cones; ++i) {
+    // generate support for the cone
+    OsiRowCut * rc = new OsiRowCut();
+    int feas = generate_support(cone_size[i], cone_type[i], members[i],
+                                sol, rc);
+    if (!feas) {
+      cuts.insert(rc);
+    }
+    delete[] members;
+  }
+}
+
 /// Clone
 CglConicCutGenerator * CglConicOA::clone() const {
   CglConicOA * new_cutg = new CglConicOA(*this);
