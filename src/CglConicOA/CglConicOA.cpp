@@ -63,11 +63,6 @@ void CglConicOA::generateCuts(OsiConicSolverInterface const & si,
   }
 }
 
-void CglConicOA::generateCuts(OsiConicSolverInterface const & si,
-			       OsiConicCuts & cuts,
-			       const CglTreeInfo info) {
-}
-
 /// Clone
 CglConicCutGenerator * CglConicOA::clone() const {
   CglConicOA * new_cutg = new CglConicOA(*this);

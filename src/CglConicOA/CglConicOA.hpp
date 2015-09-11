@@ -53,10 +53,6 @@ public:
   virtual void generateCuts(OsiConicSolverInterface const & si,
 			    OsiCuts & cs,
 			    const CglTreeInfo info = CglTreeInfo());
-  // generate non-linear (conic) cuts
-  virtual void generateCuts(OsiConicSolverInterface const & si,
-			    OsiConicCuts & cs,
-			    const CglTreeInfo info = CglTreeInfo());
   /// Return true if needs optimal basis to do cuts
   virtual bool needsOptimalBasis() const { return false; }
   /// Clone
