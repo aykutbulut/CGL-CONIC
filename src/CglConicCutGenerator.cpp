@@ -46,3 +46,17 @@ bool CglConicCutGenerator::mayGenerateRowCutsInTree() const {
 bool CglConicCutGenerator::needsOptimalBasis() const {
   return false;
 }
+
+// generate cuts
+void CglConicCutGenerator::generateCuts(
+                          const OsiConicSolverInterface & si,
+                          OsiConicCuts & cs,
+                          const CglTreeInfo info) {
+}
+
+// generate linear/ordinary cuts.
+void CglConicCutGenerator::generateCuts(
+                          const OsiConicSolverInterface & si,
+                          OsiCuts & cs,
+                          const CglTreeInfo info) {
+}
