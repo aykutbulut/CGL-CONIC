@@ -29,6 +29,7 @@ int main(int argc, char ** argv) {
   OsiCuts * cuts;
   // solve problem while we can generate cuts.
   do {
+    // ignore conic constraints and solve LP problem
     conic_solver->OsiClpSolverInterface::resolve();
     // generate cuts
     cuts = new OsiCuts();
@@ -41,19 +42,12 @@ int main(int argc, char ** argv) {
     else {
       std::cout << num_cuts << " many cuts produced." << std::endl;
     }
-    for (int i=0; i<num_cuts; ++i) {
-      OsiRowCut & cut = cuts->rowCut(i);
-      int len = cut.row().getNumElements();
-      if (len > 0) {
-        // Add cut to solver
-      }
-      else {
-        std::cerr << "Problem with cut size." << std::endl;
-        throw std::exception();
-      }
-    }
+    conic_solver->OsiSolverInterface::applyCuts(*cuts);
     delete cuts;
   } while(true);
+  // print solution status
+  conic_solver->report_feasibility();
+  std::cout << "Objective value " << conic_solver->getObjValue() << std::endl;
   delete conic_solver;
   return 0;
 }
