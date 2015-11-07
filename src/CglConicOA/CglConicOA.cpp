@@ -10,7 +10,8 @@
 #include <sstream>
 #include <iomanip>
 
-#define EPS 1e-5
+#define CONE_EPS 1e-6
+#define COEF_EPS 1e-5
 
 CglConicOA::CglConicOA()
   : param_(0) {
@@ -65,15 +66,15 @@ void CglConicOA::generateCuts(OsiConicSolverInterface const & si,
 
 // generate cuts for a linear solver interface
 void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-                  int num_cones, OsiLorentzConeType const * cone_type,
-                  int const * cone_size, int const * const * members) {
+		  int num_cones, OsiLorentzConeType const * cone_type,
+		  int const * cone_size, int const * const * members) {
   // get solution
   double const * sol = si.getColSolution();
   for (int i=0; i<num_cones; ++i) {
     // generate support for the cone
     OsiRowCut * rc = new OsiRowCut();
     int feas = generate_support(cone_size[i], cone_type[i], members[i],
-                                sol, rc);
+				sol, rc);
     if (!feas) {
       cuts.insert(rc);
     }
@@ -95,39 +96,47 @@ std::string CglConicOA::generateCpp( FILE * fp) {
 }
 
 int CglConicOA::generate_support(int size,
-                                 OsiLorentzConeType type,
-                                 int const * members,
-                                 double const * sol,
-                                 OsiRowCut * rc) const {
+				 OsiLorentzConeType type,
+				 int const * members,
+				 double const * sol,
+				 OsiRowCut * rc) const {
   int feas;
   if (type==OSI_QUAD) {
     feas = generate_support_lorentz(size, members, sol, rc);
   }
   else {
     feas = generate_support_rotated_lorentz(size,
-                                            members, sol, rc);
+					    members, sol, rc);
   }
   return feas;
 }
 
 int CglConicOA::generate_support_lorentz(int size,
-                                 int const * members,
-                                 double const * sol,
-                                 OsiRowCut * rc) const {
+				 int const * members,
+				 double const * sol,
+				 OsiRowCut * rc) const {
   int feas;
   double * par_point = new double[size];
   for(int j=0; j<size; ++j) {
     par_point[j] = sol[members[j]];
   }
   double * p = par_point;
+  // check the point
+  // set variables almost 0 to 0.
+  for (int i=0; i<size; ++i) {
+    if ((p[i]<CONE_EPS) && (p[i]>-CONE_EPS)) {
+      p[i] = 0.0;
+    }
+  }
+  // todo(aykut) check whether p is 0,
+  // the method will return to 0 coef if p is o.
   double term1;
   double term2;
   term1 = p[0];
   term2 = std::inner_product(p+1, p+size, p+1, 0.0);
   term2 = sqrt(term2);
   double activity = term1-term2;
-  delete[] par_point;
-  if (activity<-1e-5) {
+  if (activity<-CONE_EPS) {
     // current solution is infeasible to conic constraint i.
     double * coef = new double[size];
     double sum_rest;
@@ -148,13 +157,14 @@ int CglConicOA::generate_support_lorentz(int size,
   else {
     feas = 1;
   }
+  delete[] par_point;
   return feas;
 }
 
 int CglConicOA::generate_support_rotated_lorentz(int size,
-                                                 int const * members,
-                                                 double const * sol,
-                                                 OsiRowCut * rc) const {
+						 int const * members,
+						 double const * sol,
+						 OsiRowCut * rc) const {
   int feas;
   double activity;
   double * par_point = new double[size];
@@ -166,7 +176,7 @@ int CglConicOA::generate_support_rotated_lorentz(int size,
   double sum_rest = 0.0;
   sum_rest = std::inner_product(p+2, p+size, p+2, 0.0);
   activity = 2.0*p[0]*p[1]-sum_rest;
-  if (activity<-1e-5) {
+  if (activity<-CONE_EPS) {
     //  at the end, set coef and lhs
     // map point from RLORENTZ space to LORENTZ space, find the projection on LORENTZ,
     // project this point to RLORENTZ and generate cut
