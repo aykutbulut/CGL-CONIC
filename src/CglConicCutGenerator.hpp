@@ -45,6 +45,14 @@ public:
   virtual void generateCuts(const OsiConicSolverInterface & si,
 			    OsiCuts & cs,
 			    const CglTreeInfo info = CglTreeInfo());
+
+  // generate linear cuts for a solver interface with conic constraints
+  // given explicitly
+  virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
+			    int num_cones,
+			    OsiLorentzConeType const * cone_type,
+			    int const * cone_size,
+			    int const * const * members) {}
   int aggressiveness() const;
   void setAggressiveness(int value);
   // set whether can do global cuts
