@@ -25,17 +25,17 @@ class CglConicOA: public CglConicCutGenerator {
   // private functions
   // return 0 if sol is infeasible for the cone, nonzero otherwise
   int generate_support(int size, OsiLorentzConeType type,
-                       int const * members,
-                       double const * sol,
-                       OsiRowCut * rc) const;
+		       int const * members,
+		       double const * sol,
+		       OsiRowCut * rc) const;
   int generate_support_lorentz(int size,
-                               int const * members,
-                               double const * sol,
-                               OsiRowCut * rc) const;
+			       int const * members,
+			       double const * sol,
+			       OsiRowCut * rc) const;
   int generate_support_rotated_lorentz(int size,
-                                       int const * members,
-                                       double const * sol,
-                                       OsiRowCut * rc) const;
+				       int const * members,
+				       double const * sol,
+				       OsiRowCut * rc) const;
 public:
   // default constructor
   CglConicOA();
@@ -54,9 +54,9 @@ public:
 			    OsiCuts & cs,
 			    const CglTreeInfo info = CglTreeInfo());
   // generate cuts for a linear solver interface
-  void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-                    int num_cones, OsiLorentzConeType const * cone_type,
-                    int const * cone_size, int const * const * members);
+  virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
+			    int num_cones, OsiLorentzConeType const * cone_type,
+			    int const * cone_size, int const * const * members);
   /// Return true if needs optimal basis to do cuts
   virtual bool needsOptimalBasis() const { return false; }
   /// Clone

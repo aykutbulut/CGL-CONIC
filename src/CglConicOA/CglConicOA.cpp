@@ -60,6 +60,9 @@ void CglConicOA::generateCuts(OsiConicSolverInterface const & si,
     if (!feas) {
       cuts.insert(rc);
     }
+    else {
+      delete rc;
+    }
     delete[] members;
   }
 }
@@ -78,7 +81,9 @@ void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
     if (!feas) {
       cuts.insert(rc);
     }
-    delete[] members;
+    else {
+      delete rc;
+    }
   }
 }
 
