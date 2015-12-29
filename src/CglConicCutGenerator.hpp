@@ -53,6 +53,13 @@ public:
 			    OsiLorentzConeType const * cone_type,
 			    int const * cone_size,
 			    int const * const * members) {}
+  // generate linear cuts for a solver interface with conic constraints
+  // given explicitly
+  virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
+			    int num_cones,
+			    OsiLorentzConeType const * cone_type,
+			    int const * cone_size,
+			    int const * const * members, int num_points) {}
   int aggressiveness() const;
   void setAggressiveness(int value);
   // set whether can do global cuts

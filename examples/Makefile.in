@@ -108,7 +108,8 @@ CLEANFILES = \
 	milp_cuts.@OBJEXT@ milp_cuts@EXEEXT@ \
 	canonical.@OBJEXT@ canonical@EXEEXT@ \
 	mir.@OBJEXT@ mir@EXEEXT@ \
-	cutting_plane_solver.@OBJEXT@ cutting_plane_solver@EXEEXT@
+	cutting_plane_solver.@OBJEXT@ cutting_plane_solver@EXEEXT@\
+	ipm.@OBJEXT@ ipm@EXEEXT@
 
 all: $(EXE)
 

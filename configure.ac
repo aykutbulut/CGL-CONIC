@@ -84,6 +84,12 @@ AC_COIN_CHECK_PACKAGE(Cola,  [cola],  [CglConicLib])
 if test $coin_has_cola != yes ; then
   AC_MSG_ERROR([Required package Cola not available.])
 fi
+AC_COIN_CHECK_PACKAGE(OsiMosek,  [osimosek],  [CglConicLib])
+if test $coin_has_osimosek != yes ; then
+  AC_MSG_ERROR([Required package OsiMosek not available.])
+fi
+
+
 dnl AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
 
 AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
@@ -161,13 +167,14 @@ dnl AC_COIN_VPATH_LINK([test/CglTestData/capPlan1.mps test/CglTestData/l152lav.m
 # configuration header file)
 AC_CONFIG_FILES([Makefile
 		 examples/Makefile
-                 src/Makefile
-                 src/CglConicGD1/Makefile
-                 src/CglConicGD2/Makefile
-                 src/CglConicMIR/Makefile
-                 src/CglConicOA/Makefile
-                 cglconic.pc
-                 cglconic-uninstalled.pc])
+		 src/Makefile
+		 src/CglConicGD1/Makefile
+		 src/CglConicGD2/Makefile
+		 src/CglConicMIR/Makefile
+		 src/CglConicOA/Makefile
+		 src/CglConicIPM/Makefile
+		 cglconic.pc
+		 cglconic-uninstalled.pc])
 AC_CONFIG_FILES([doxydoc/doxygen.conf])
 
 # Here put the location and name of the configuration header file

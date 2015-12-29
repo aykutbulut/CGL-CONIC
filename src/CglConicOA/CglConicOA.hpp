@@ -57,6 +57,11 @@ public:
   virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
 			    int num_cones, OsiLorentzConeType const * cone_type,
 			    int const * cone_size, int const * const * members);
+    virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
+			      int num_cones,
+			      OsiLorentzConeType const * cone_type,
+			      int const * cone_size,
+			      int const * const * members, int num_points);
   /// Return true if needs optimal basis to do cuts
   virtual bool needsOptimalBasis() const { return false; }
   /// Clone

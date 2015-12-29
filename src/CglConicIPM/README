@@ -1,0 +1,9 @@
+This is a cut generator for Second Order Cone Optimization problems.
+
+It generates cut for a linear solver interface. Conic constraints are
+given as inputs. It generates linear constraints that cuts the current
+solution.
+
+This is done by solving a SOCO optimization problem with IPM method. Moreover
+the procedure also approximates the conic constraint around the IPM solution
+found.
