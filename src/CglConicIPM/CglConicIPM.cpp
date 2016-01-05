@@ -150,13 +150,14 @@ void CglConicIPM::method1(OsiSolverInterface const & si, OsiCuts & cuts,
     }
     if (activity>-1e-5) {
       // solution is already feasible
+      delete[] par_sol;
       continue;
     }
     else {
       feasible = 0;
+      delete[] par_sol;
       break;
     }
-    delete[] par_sol;
   }
   if (feasible) {
     return;
