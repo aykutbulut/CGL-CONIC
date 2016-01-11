@@ -23,19 +23,45 @@
 class CglConicOA: public CglConicCutGenerator {
   CglConicOAParam * param_;
   // private functions
-  // return 0 if sol is infeasible for the cone, nonzero otherwise
-  int generate_support(int size, OsiLorentzConeType type,
+  // generate support given a point on the cone.
+  // assumes the point is on the cone boundry.
+  void generate_support(int size, OsiLorentzConeType type,
 		       int const * members,
-		       double const * sol,
+		       double const * point,
 		       OsiRowCut * rc) const;
-  int generate_support_lorentz(int size,
+  void generate_support_lorentz(int size,
 			       int const * members,
 			       double const * sol,
 			       OsiRowCut * rc) const;
-  int generate_support_rotated_lorentz(int size,
+  void generate_support_rotated_lorentz(int size,
 				       int const * members,
 				       double const * sol,
 				       OsiRowCut * rc) const;
+  // project given infeasible solution to an array of points on the cones
+  // of the problem
+  void project(int n, int num_cones, int const * cone_size,
+	       OsiLorentzConeType const * cone_type,
+	       int const * const * members, double const * sol,
+	       double * point, int * const feasible) const;
+  // project given infeasible solution to the cone
+  void project_one(int n, int num_cones, int const * cone_size,
+	       OsiLorentzConeType const * cone_type,
+	       int const * const * members, double const * sol,
+	       double * point, int * const feasible) const;
+  // project given infeasible solution to an array of points the cones
+  // of the problem.
+  void project_random(int n, int num_cones, int const * cone_size,
+	       OsiLorentzConeType const * cone_type,
+	       int const * const * members, double const * sol,
+	       double * const * point, int * const feasible,
+	       int num_points) const;
+  // project given infeasible solution to an array of points the cones
+  // of the problem using polar coordinates.
+  void project_trig(int n, int num_cones, int const * cone_size,
+	       OsiLorentzConeType const * cone_type,
+	       int const * const * members, double const * sol,
+	       double * const * point, int * const feasible,
+	       int num_points) const;
 public:
   // default constructor
   CglConicOA();
@@ -57,11 +83,11 @@ public:
   virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
 			    int num_cones, OsiLorentzConeType const * cone_type,
 			    int const * cone_size, int const * const * members);
-    virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-			      int num_cones,
-			      OsiLorentzConeType const * cone_type,
-			      int const * cone_size,
-			      int const * const * members, int num_points);
+  virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
+			    int num_cones,
+			    OsiLorentzConeType const * cone_type,
+			    int const * cone_size,
+			    int const * const * members, int num_points);
   /// Return true if needs optimal basis to do cuts
   virtual bool needsOptimalBasis() const { return false; }
   /// Clone
