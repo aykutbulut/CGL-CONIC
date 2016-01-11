@@ -28,6 +28,7 @@ int main(int argc, char ** argv) {
   CglConicOA cg;
   OsiCuts * cuts;
   int total_num_cuts = 0;
+  clock_t start_time = clock();
   // solve problem while we can generate cuts.
   do {
     // ignore conic constraints and solve LP problem
@@ -47,10 +48,13 @@ int main(int argc, char ** argv) {
     conic_solver->OsiSolverInterface::applyCuts(*cuts);
     delete cuts;
   } while(true);
+  clock_t duration = clock() - start_time;
   // print solution status
   conic_solver->report_feasibility();
-  std::cout << total_num_cuts << " many cuts produced in total." << std::endl;
-  std::cout << "Objective value " << conic_solver->getObjValue() << std::endl;
+  std::cout << "Total number of cuts: " << total_num_cuts << std::endl;
+  std::cout << "Objective value:      " << conic_solver->getObjValue() << std::endl;
+  std::cout << "CPU time:             "
+	    << double(duration)/double(CLOCKS_PER_SEC) << std::endl;
   delete conic_solver;
   return 0;
 }
