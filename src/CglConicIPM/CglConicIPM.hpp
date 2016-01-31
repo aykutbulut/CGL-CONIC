@@ -22,6 +22,8 @@
 // generate cuts using the current solution stored in the solver interface.
 class CglConicIPM: public CglConicCutGenerator {
   CglConicIPMParam * param_;
+  // fix integer variables store the model at solver_
+  void fixIntegerVars(OsiSolverInterface const & si);
   // solver is preferable an IPM implementation for efficiency
   OsiConicSolverInterface * solver_;
   // generate cuts for a linear solver interface
@@ -30,6 +32,10 @@ class CglConicIPM: public CglConicCutGenerator {
 	       int const * cone_size, int const * const * members,
 	       int num_points);
   void method2(OsiSolverInterface const & si, OsiCuts & cuts,
+	       int num_cones, OsiLorentzConeType const * cone_type,
+	       int const * cone_size, int const * const * members,
+	       int num_points);
+  void method3(OsiSolverInterface const & si, OsiCuts & cuts,
 	       int num_cones, OsiLorentzConeType const * cone_type,
 	       int const * cone_size, int const * const * members,
 	       int num_points);

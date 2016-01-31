@@ -10,7 +10,8 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
-#include <random>
+#include <numeric>
+//#include <random>
 
 #include <OsiMosekSolverInterface.hpp>
 
@@ -79,7 +80,7 @@ void CglConicIPM::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
 		  int num_cones, OsiLorentzConeType const * cone_type,
 			       int const * cone_size, int const * const * members,
 			       int num_points) {
-  method1(si, cuts, num_cones, cone_type, cone_size, members, num_points);
+  method3(si, cuts, num_cones, cone_type, cone_size, members, num_points);
 }
 
 // optimize given SOCO. Find points around optimal solution and add cuts
@@ -417,6 +418,175 @@ void CglConicIPM::method2(OsiSolverInterface const & si, OsiCuts & cuts,
   delete[] points;
 }
 
+
+void CglConicIPM::method3(OsiSolverInterface const & si, OsiCuts & cuts,
+	     int num_cones, OsiLorentzConeType const * cone_type,
+	     int const * cone_size, int const * const * members,
+	     int num_points) {
+  // si solution
+  double const * sol = si.getColSolution();
+  // unboundedness direction, if si is unbounded.
+  double * u_dir = 0;
+  // if linear problem is unbounded restrict unboundedness direction
+  if (si.isProvenDualInfeasible()) {
+    // check if primal is infeasible, then the problem is infeasible
+    if (si.isProvenPrimalInfeasible()) {
+      // Both LP primal and dual is infeasible, conic problem is infeasible
+      std::cerr << "CglConic: Conic problem is infeasible."
+		<< std::endl;
+    }
+    // get one ray
+    // todo(aykut) for now we get only one ray
+    std::vector<double*> rays = si.getPrimalRays(1);
+    double const * vec = 0;
+    if (!rays.empty() and rays[0]!=0) {
+      vec = rays[0];
+    }
+    else {
+      std::cerr << "CglConic: Warning! "
+		<< "LP relaxation is unbounded but solver did not return a "
+	"direction of unboundedness." << std::endl
+		<< "CglConic: Trying to generate supports using objective "
+	"function coefficients..." << std::endl;
+      vec = si.getObjCoefficients();
+    }
+    int num_cols = si.getNumCols();
+    u_dir = new double[num_cols];
+    std::copy(vec, vec+num_cols, u_dir);
+    // delete all rays not just first one.
+    if (!rays.empty()) {
+      for(int i=0; i<rays.size(); ++i)
+	delete[] rays[i];
+      rays.clear();
+    }
+  }
+  // if there is an unboundedness direction replace sol with it
+  if (u_dir) {
+    sol = u_dir;
+  }
+  int feasible = 1;
+  for (int i=0; i<num_cones; ++i) {
+    double activity;
+    double * par_sol = new double[cone_size[i]];
+    for (int j=0; j<cone_size[i]; ++j) {
+      par_sol[j] = sol[members[i][j]];
+    }
+    if (cone_type[i]==OSI_QUAD) {
+      activity = par_sol[0] - sqrt(std::inner_product(par_sol+1,
+				par_sol+cone_size[i], par_sol+1, 0.0));
+    }
+    else if (cone_type[i]==OSI_RQUAD) {
+      activity = 2*par_sol[0]*par_sol[1] - std::inner_product(par_sol+2,
+				par_sol+cone_size[i], par_sol+2, 0.0);
+    }
+    else {
+      std::cerr << "Unknown cone." << std::endl;
+      throw std::exception();
+    }
+    if (activity>-1e-5) {
+      // solution is already feasible
+      delete[] par_sol;
+      continue;
+    }
+    else {
+      feasible = 0;
+      delete[] par_sol;
+      break;
+    }
+  }
+  if (feasible) {
+    return;
+  }
+  // free solver
+  if (solver_) {
+    delete solver_;
+  }
+  solver_ = new OsiMosekSolverInterface();
+  // load data to solver
+  CoinPackedMatrix const * matrix = si.getMatrixByCol();
+  double const * rowlb = si.getRowLower();
+  double const * rowub = si.getRowUpper();
+  double const * collb = si.getColLower();
+  double const * colub = si.getColUpper();
+  double const * obj = si.getObjCoefficients();
+  double * new_collb = new double[si.getNumCols()];
+  double * new_colub = new double[si.getNumCols()];
+  char const * col_type = si.getColType();
+  std::copy(collb, collb+si.getNumCols(), new_collb);
+  std::copy(colub, colub+si.getNumCols(), new_colub);
+  for (int i=0; i<si.getNumCols(); ++i) {
+    if (col_type[i]=='\000') {
+      continue;
+    }
+    else {
+      new_collb[i] = sol[i];
+      new_colub[i] = sol[i];
+    }
+  }
+  solver_->loadProblem(*matrix, new_collb, new_colub, obj, rowlb, rowub);
+  // add conic constraints
+  for (int i=0; i<num_cones; ++i) {
+    solver_->addConicConstraint(cone_type[i], cone_size[i], members[i]);
+  }
+  // solve problem
+  solver_->initialSolve();
+  if (solver_->isProvenPrimalInfeasible() || solver_->isProvenDualInfeasible()) {
+    // problem is infeasible, do not generate any cuts.
+    return;
+  }
+  else if (!(solver_->isProvenOptimal())) {
+    std::cerr << "Cut problem could not be solved!" << std::endl;
+    std::cerr << "No cuts generated!" << std::endl;
+    return;
+  }
+  // get solution
+  double const * ipm_sol = solver_->getColSolution();
+  // create random points
+  int num_cols = solver_->getNumCols();
+  // create random points around solution, on the cone
+  double ** points = new double*[num_points];
+  for (int i=0; i<num_points; ++i) {
+    // allocate memory for each point
+    points[i] = new double[num_cols]();
+  }
+  // create random points around sol, on the cone
+  create_rand_points(num_cols, ipm_sol, num_cones, cone_type, cone_size,
+		     members, points, num_points);
+  // add cuts from the points that are on the cones.
+  for (int j=0; j<num_points; ++j) {
+    add_cuts2(num_cols, points[j], num_cones, cone_type, cone_size,
+	     members, cuts);
+  }
+  // add cuts that actually cuts the point.
+  // add cut if it actually cuts the lp solution
+  int num_cuts = cuts.sizeRowCuts();
+  std::vector<int> cuts_to_del(num_cuts, -1);
+  for (int i=0; i<num_cuts; ++i) {
+    OsiRowCut const * rc = cuts.rowCutPtr(i);
+    double infeasibility = rc->violated(sol);
+    if (infeasibility<1e-5) {
+      // rc does not cut sol
+      cuts_to_del.push_back(i);
+    }
+  }
+  // remove cuts
+  std::vector<int>::reverse_iterator rit;
+  for (rit=cuts_to_del.rbegin(); rit!=cuts_to_del.rend(); ++rit) {
+    if (*rit!=-1) {
+      cuts.eraseRowCut(*rit);
+    }
+  }
+  // free memory allocated to points
+  for (int i=0; i<num_points; ++i) {
+    delete[] points[i];
+  }
+  delete[] points;
+  if (u_dir) {
+    delete[] u_dir;
+  }
+}
+
+
 // add cuts from the point on the cone
 // we know that points are on the cone.
 void CglConicIPM::add_cuts2(int num_cols, double const * point, int num_cones,
@@ -541,8 +711,6 @@ void CglConicIPM::create_rand_point3(int cone_size, double const * par_sol,
 				     OsiLorentzConeType cone_type,
 				     int const * members,
 				     double * par_point) const {
-  std::default_random_engine generator;
-  std::uniform_real_distribution<double> distribution(0.0,1.0);
   double eps = 1e-1;
   int rand_sign;
   double rand_number;
@@ -560,7 +728,7 @@ void CglConicIPM::create_rand_point3(int cone_size, double const * par_sol,
   }
   for (int i=0; i<cone_size; ++i) {
     rand_sign = rand()%2;
-    rand_number = eps*distribution(generator);
+    rand_number = eps*(rand()/double(RAND_MAX));
     if (rand_sign==0) {
       par_point[i] = par_sol[i] + rand_number;
     }
@@ -568,11 +736,6 @@ void CglConicIPM::create_rand_point3(int cone_size, double const * par_sol,
       par_point[i] = par_sol[i] - rand_number;
     }
   }
-
-
-
-
-
   sum_sq = std::inner_product(par_point+start, par_point+cone_size,
 			      par_point+start, 0.0);
   if (cone_type==OSI_QUAD) {
@@ -667,7 +830,6 @@ int CglConicIPM::generate_support_lorentz(int size,
   if (activity<-CONE_EPS) {
     // current solution is infeasible to conic constraint i.
     double * coef = new double[size];
-    double sum_rest;
     double x1 = term2;
     // cone is in canonical form
     for (int j=1; j<size; ++j) {
