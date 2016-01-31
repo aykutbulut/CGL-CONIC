@@ -78,7 +78,7 @@ void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
   // project sol to the conic constraints
   //project(n, num_cones, cone_size, cone_type, members, sol, point, feasible);
   //int num_points = 5;
-  project_trig(n, num_cones, cone_size, cone_type, members, sol, point, feasible, num_points);
+  project_random(n, num_cones, cone_size, cone_type, members, sol, point, feasible, num_points);
   // iterate over points on the cone
   for (int k=0; k<num_points; ++k) {
     // iterate over cones and generate support
