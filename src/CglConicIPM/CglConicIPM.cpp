@@ -10,7 +10,8 @@
 #include <sstream>
 #include <iomanip>
 #include <algorithm>
-#include <random>
+#include <numeric>
+//#include <random>
 
 #include <OsiMosekSolverInterface.hpp>
 
@@ -710,8 +711,6 @@ void CglConicIPM::create_rand_point3(int cone_size, double const * par_sol,
 				     OsiLorentzConeType cone_type,
 				     int const * members,
 				     double * par_point) const {
-  std::default_random_engine generator;
-  std::uniform_real_distribution<double> distribution(0.0,1.0);
   double eps = 1e-1;
   int rand_sign;
   double rand_number;
@@ -729,7 +728,7 @@ void CglConicIPM::create_rand_point3(int cone_size, double const * par_sol,
   }
   for (int i=0; i<cone_size; ++i) {
     rand_sign = rand()%2;
-    rand_number = eps*distribution(generator);
+    rand_number = eps*(rand()/double(RAND_MAX));
     if (rand_sign==0) {
       par_point[i] = par_sol[i] + rand_number;
     }
@@ -737,11 +736,6 @@ void CglConicIPM::create_rand_point3(int cone_size, double const * par_sol,
       par_point[i] = par_sol[i] - rand_number;
     }
   }
-
-
-
-
-
   sum_sq = std::inner_product(par_point+start, par_point+cone_size,
 			      par_point+start, 0.0);
   if (cone_type==OSI_QUAD) {
@@ -836,7 +830,6 @@ int CglConicIPM::generate_support_lorentz(int size,
   if (activity<-CONE_EPS) {
     // current solution is infeasible to conic constraint i.
     double * coef = new double[size];
-    double sum_rest;
     double x1 = term2;
     // cone is in canonical form
     for (int j=1; j<size; ++j) {

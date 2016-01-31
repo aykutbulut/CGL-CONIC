@@ -10,6 +10,7 @@
 #include <sstream>
 #include <iomanip>
 #include <cmath>
+#include <numeric>
 
 #define CONE_EPS 1e-6
 #define COEF_EPS 1e-5
