@@ -64,10 +64,8 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddCuts(
   // create a copy of the input
   OsiConicSolverInterface * solver = si.clone();
   // decide disjunction var and cut cone
-  int dis_var;
-  int cut_cone;
   std::vector<std::pair<int,int> > candidates;
-  candidates = compute_dis_var_cone(si, dis_var, cut_cone);
+  candidates = compute_dis_var_cone(si);
   std::vector<std::pair<int,int> >::const_iterator it;
   // print cut candidates
   for (it=candidates.begin(); it!=candidates.end(); it++) {
@@ -300,8 +298,7 @@ std::string CglConicGD1::generateCpp( FILE * fp) {
 
 // compute a set of disjunction variables
 std::vector<std::pair<int,int> > CglConicGD1::compute_dis_var_cone(
-                                        OsiConicSolverInterface const & si,
-                                        int & dis_var, int & dis_cone) const {
+                              OsiConicSolverInterface const & si) const {
   // return the set of variables that are fractional and in a cone.
   std::vector<std::pair<int,int> > candidates;
   double const * sol = si.getColSolution();
@@ -325,8 +322,6 @@ std::vector<std::pair<int,int> > CglConicGD1::compute_dis_var_cone(
             si.getConicConstraint(j, lctype, cone_size, members);
             for (int k=0; k<cone_size; ++k) {
               if (members[k]==i) {
-                dis_var = i;
-                dis_cone = j;
                 candidates.push_back(std::make_pair(i,j));
               }
             }
