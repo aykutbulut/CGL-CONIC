@@ -1,0 +1,9 @@
+This is a cut generator for Second Order Cone Optimization problems.
+
+It generates cut for a linear solver interface. Conic constraints are
+given as inputs. It generates linear constraints that cuts the current
+solution.
+
+This cut generator is for an integer feasible but conic infeasible solution.
+It fixes the integer variables and solves the problem for continuous variables.
+We generate cuts from the binding conic constraints.
