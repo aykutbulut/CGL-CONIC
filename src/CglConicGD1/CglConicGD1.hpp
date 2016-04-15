@@ -23,21 +23,24 @@
 // generates and adds cuts to solver_
 class CglConicGD1: public CglConicCutGenerator {
   CglConicGD1Param * param_;
-  OsiConicSolverInterface * solver_;
   int num_cuts_;
   std::vector<CglConicGD1Cut*> cuts_;
   // get equality constraints the cut cone members are in
   // get Ax=b
-  void get_rows(int cut_cone, int & num_eq_rows, int *& rows);
-  void add_cut(CglConicGD1Cut * cut);
+  void get_rows(OsiConicSolverInterface const & si,
+                int cut_cone, int & num_eq_rows, int *& rows) const;
+  void add_cut(OsiConicSolverInterface * solver, CglConicGD1Cut * cut);
   // adds generated cuts to the model.
-  void add_cuts();
+  void add_cuts(OsiConicSolverInterface * solver);
   // frees memory
   void clear_cuts();
   // compute disjunction var and the cone var is in.
-  std::vector<std::pair<int, int> > compute_dis_var_cone(int & dis_var,
-							 int & dis_cone) const;
-  void add_cone_form_cut(CglConicGD1Cut * cut);
+  std::vector<std::pair<int, int> > compute_dis_var_cone(
+                                    OsiConicSolverInterface const & si,
+                                    int & dis_var,
+                                    int & dis_cone) const;
+  void add_cone_form_cut(OsiConicSolverInterface * solver,
+                         CglConicGD1Cut * cut);
   void print_cut(CglConicGD1Cut * cut) const;
 public:
   // default constructor
@@ -54,17 +57,17 @@ public:
   CglConicGD1Param * getParam() const {return param_;}
   // Virtual functions
   virtual void generateCuts(const OsiConicSolverInterface & si,
-			    OsiConicCuts & cs,
-			    const CglTreeInfo info = CglTreeInfo());
+                            OsiConicCuts & cs,
+                            const CglTreeInfo info = CglTreeInfo());
   /// Return true if needs optimal basis to do cuts
   virtual bool needsOptimalBasis() const { return false; }
   /// Clone
   virtual CglConicCutGenerator * clone() const;
   /// Create C++ lines to get to current state
   virtual std::string generateCpp( FILE * fp);
-  // generate and add cuts
-  void generateAndAddCuts(OsiConicSolverInterface & si,
-			  const CglTreeInfo info = CglTreeInfo());
+  // generate and add cuts, return conic interface
+  OsiConicSolverInterface * generateAndAddCuts(OsiConicSolverInterface const & si,
+                                    const CglTreeInfo info = CglTreeInfo());
   int getNumCutsAdded() const;
 };
 

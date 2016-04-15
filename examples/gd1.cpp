@@ -23,7 +23,7 @@
 #include <OsiCuts.hpp>
 // OSICONIC header
 #include <OsiConicSolverInterface.hpp>
-// #include <OsiMosekSolverInterface.hpp>
+#include <OsiMosekSolverInterface.hpp>
 #include <OsiConicCuts.hpp>
 // COLA headers
 #include <ColaModel.hpp>
@@ -47,8 +47,8 @@ int main(int argc, const char *argv[]) {
   string mpsFileName = argv[1];
   try {
     // Instantiate a specific solver interface
-    OsiConicSolverInterface * si = new ColaModel();
-    // OsiConicSolverInterface * si = new OsiMosekSolverInterface();
+    //OsiConicSolverInterface * si = new ColaModel();
+    OsiConicSolverInterface * si = new OsiMosekSolverInterface();
     // Read file describing problem
     si->readMps(mpsFileName.c_str(),"mps");
     // Solve continuous problem
@@ -69,7 +69,9 @@ int main(int argc, const char *argv[]) {
       // Get current solution value
       obj = si->getObjValue();
       // Generate and apply cuts
-      cg.generateAndAddCuts(*si);
+      OsiConicSolverInterface * nsi = cg.generateAndAddCuts(*si);
+      delete si;
+      si = nsi;
       //si->writeMps("after_cut");
       si->resolve();
       equalObj = eq(si->getObjValue(), obj);

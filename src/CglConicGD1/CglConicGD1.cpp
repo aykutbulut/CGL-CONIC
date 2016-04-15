@@ -13,7 +13,7 @@
 #define EPS 1e-5
 
 CglConicGD1::CglConicGD1(OsiConicSolverInterface * solver)
-  : param_(0), solver_(solver) {
+  : param_(0) {
   param_ = new CglConicGD1Param();
   num_cuts_ = 0;
   cuts_.clear();
@@ -51,47 +51,49 @@ void CglConicGD1::setParam(const CglConicGD1Param & param) {
 }
 
 void CglConicGD1::generateCuts(const OsiConicSolverInterface & si,
-			       OsiConicCuts & cs,
-			       const CglTreeInfo info) {
+                               OsiConicCuts & cs,
+                               const CglTreeInfo info) {
   std::cerr << "Not implemented yet!" << std::endl;
   throw std::exception();
 }
 
 // generates cuts and adds them to si.
-void CglConicGD1::generateAndAddCuts(OsiConicSolverInterface & si,
-				     const CglTreeInfo info) {
-  solver_ = &si;
+OsiConicSolverInterface * CglConicGD1::generateAndAddCuts(
+                                     OsiConicSolverInterface const & si,
+                                     const CglTreeInfo info) {
+  // create a copy of the input
+  OsiConicSolverInterface * solver = si.clone();
   // decide disjunction var and cut cone
   int dis_var;
   int cut_cone;
   std::vector<std::pair<int,int> > candidates;
-  candidates = compute_dis_var_cone(dis_var, cut_cone);
+  candidates = compute_dis_var_cone(si, dis_var, cut_cone);
   std::vector<std::pair<int,int> >::const_iterator it;
   // print cut candidates
   for (it=candidates.begin(); it!=candidates.end(); it++) {
     int dis_var = it->first;
     int cut_cone = it->second;
     std::cout << "Cut var " << dis_var
-	      << " cone " << cut_cone << std::endl;
+              << " cone " << cut_cone << std::endl;
   }
   // add cuts for all (var,cone) pair
   for (it=candidates.begin(); it!=candidates.end(); it++) {
     int dis_var = it->first;
     int cut_cone = it->second;
     std::cout << "Adding cut using var " << dis_var
-	      << " cone " << cut_cone << std::endl;
+              << " cone " << cut_cone << std::endl;
     // get equality constraints the cut cone members are in
     // get Ax=b
     int num_eq_rows;
     int * rows;
-    get_rows(cut_cone, num_eq_rows, rows);
+    get_rows(si, cut_cone, num_eq_rows, rows);
     if (num_eq_rows==0) {
       delete[] rows;
       continue;
     }
     // model.addConicCutGenerator(rows1, 2, 0);
-    CglConicGD1Cut * cut = new CglConicGD1Cut(solver_, num_eq_rows, rows,
-					      cut_cone, dis_var);
+    CglConicGD1Cut * cut = new CglConicGD1Cut(&si, num_eq_rows, rows,
+                                              cut_cone, dis_var);
     num_cuts_++;
     if(!cut->valid()) {
       std::cerr << "Generated cut is not valid." << std::endl;
@@ -103,12 +105,13 @@ void CglConicGD1::generateAndAddCuts(OsiConicSolverInterface & si,
     //add_cut(cut);
     delete[] rows;
   }
-  add_cuts();
+  add_cuts(solver);
   // clear cuts after adding them
   clear_cuts();
   //std::copy(cut_row.begin(), cut_row.end(), cut_row_in);
   // once we determined the cut row, we can generate cut using any cone and
   // any cone member we want.
+  return solver;
 }
 
 void CglConicGD1::clear_cuts() {
@@ -119,41 +122,42 @@ void CglConicGD1::clear_cuts() {
   cuts_.clear();
 }
 
-void CglConicGD1::add_cuts() {
+void CglConicGD1::add_cuts(OsiConicSolverInterface * solver) {
   std::vector<CglConicGD1Cut*>::const_iterator it;
   for (it=cuts_.begin(); it!=cuts_.end(); ++it) {
-    add_cut(*it);
+    add_cut(solver, *it);
   }
 }
 
 // when is cut invalid? (1) when no hyperplane intersects quadric.
 // we have 3 options, cut_type_ 1, 2, 3.
-void CglConicGD1::add_cut(CglConicGD1Cut * cut) {
+void CglConicGD1::add_cut(OsiConicSolverInterface * solver,
+                          CglConicGD1Cut * cut) {
   if(!cut->valid()) {
     std::cerr << "Generated cut is not valid." << std::endl;
     return;
   }
   int cut_type = cut->cutType();
   if (cut_type==1)  {
-    add_cone_form_cut(cut);
+    add_cone_form_cut(solver, cut);
   }
   else if (cut_type==2) {
     int const * ind = cut->linear_cut_ind();
     double const * coef = cut->linear_cut_coef();
     double rhs = cut->linear_cut_rhs();
     int size = cut->linear_cut_size();
-    // solver_->addRow(size, ind, coef, rhs, solver_->getInfinity());
+    // solver->addRow(size, ind, coef, rhs, solver->getInfinity());
     // for now assume disjunction is variable disjunction and
     // update column bound.
-    solver_->setColLower(ind[0], rhs);
+    solver->setColLower(ind[0], rhs);
   }
   else if (cut_type==3) {
     int const * ind = cut->linear_cut_ind();
     double const * coef = cut->linear_cut_coef();
     double rhs = cut->linear_cut_rhs();
     int size = cut->linear_cut_size();
-    // solver_->addRow(size, ind, coef, -solver_->getInfinity(), rhs);
-    solver_->setColUpper(ind[0], rhs);
+    // solver->addRow(size, ind, coef, -solver->getInfinity(), rhs);
+    solver->setColUpper(ind[0], rhs);
   }
   else {
     std::cerr << "Unknown conic cut type!" << std::endl;
@@ -161,15 +165,15 @@ void CglConicGD1::add_cut(CglConicGD1Cut * cut) {
   }
 }
 
-void CglConicGD1::add_cone_form_cut(CglConicGD1Cut * cut) {
+void CglConicGD1::add_cone_form_cut(OsiConicSolverInterface * solver, CglConicGD1Cut * cut) {
   int * members = cut->getMembers();
   int num_cut_rows = cut->getNumCols();
   // num_cut_rows is same as cut cone size
   int num_cut_cols = cut->getNumRows();
   double const * newMatA = cut->getNewMatA();
   double const * newRhs =  cut->getNewRhs();
-  int num_orig_rows = solver_->getNumRows();
-  int num_orig_cols = solver_->getNumCols();
+  int num_orig_rows = solver->getNumRows();
+  int num_orig_cols = solver->getNumCols();
   // add Ix + Ay = b and y \in L to the model. x is old variable.
   // y is new variable.
   // add rows Ix = b first.
@@ -178,7 +182,7 @@ void CglConicGD1::add_cone_form_cut(CglConicGD1Cut * cut) {
   val[0] = 1.0;
   for (int i=0; i<num_cut_rows; ++i) {
     ind[0] = members[i];
-    solver_->addRow(1, ind ,val, newRhs[i], newRhs[i]);
+    solver->addRow(1, ind ,val, newRhs[i], newRhs[i]);
   }
   delete[] ind;
   delete[] val;
@@ -198,15 +202,15 @@ void CglConicGD1::add_cone_form_cut(CglConicGD1Cut * cut) {
       }
     }
     // add col
-    solver_->addCol(num_elem, ind, val, -solver_->getInfinity(),
-                    solver_->getInfinity(), 0.0);
+    solver->addCol(num_elem, ind, val, -solver->getInfinity(),
+                    solver->getInfinity(), 0.0);
     num_elem = 0;
   }
   delete[] ind;
   delete[] val;
   // add cone y in L. Leading variable may not be y_1.
   if (num_cut_cols==1) {
-    solver_->setColLower(num_orig_cols, 0.0);
+    solver->setColLower(num_orig_cols, 0.0);
   }
   else {
     int * cone_ind = new int[num_cut_cols];
@@ -223,25 +227,26 @@ void CglConicGD1::add_cone_form_cut(CglConicGD1Cut * cut) {
       }
     }
     OsiLorentzConeType type = OSI_QUAD;
-    solver_->addConicConstraint(type, num_cut_cols, cone_ind);
+    solver->addConicConstraint(type, num_cut_cols, cone_ind);
     delete[] cone_ind;
   }
 }
 
-void CglConicGD1::get_rows(int cut_cone, int & num_eq_rows, int *& rows) {
+void CglConicGD1::get_rows(OsiConicSolverInterface const & si,
+                           int cut_cone, int & num_eq_rows, int *& rows) const {
   std::vector<int> vrows;
   OsiLorentzConeType type;
   int cone_size;
   int * members;
-  solver_->getConicConstraint(cut_cone, type, cone_size, members);
-  int m = solver_->getNumCols();
-  int n = solver_->getNumRows();
+  si.getConicConstraint(cut_cone, type, cone_size, members);
+  int m = si.getNumCols();
+  int n = si.getNumRows();
   int * cone_members = new int[m]();
   for (int i=0; i<cone_size; ++i) {
     cone_members[members[i]] = 1;
   }
-  CoinPackedMatrix const * mat = solver_->getMatrixByRow();
-  char const * row_sense = solver_->getRowSense();
+  CoinPackedMatrix const * mat = si.getMatrixByRow();
+  char const * row_sense = si.getRowSense();
   for (int i=0; i<n; ++i) {
     int flag = 0;
     if (row_sense[i]=='E') {
@@ -250,13 +255,13 @@ void CglConicGD1::get_rows(int cut_cone, int & num_eq_rows, int *& rows) {
       int const * ind = mat->getIndices();
       //int vec_size = mat->getVectorSize(i);
       for (int j=first; j<last; j++) {
-	if (cone_members[ind[j]]==0) {
-	  flag = 1;
-	  break;
-	}
+        if (cone_members[ind[j]]==0) {
+          flag = 1;
+          break;
+        }
       }
       if (flag==0) {
-	vrows.push_back(i);
+        vrows.push_back(i);
       }
     }
   }
@@ -294,45 +299,47 @@ std::string CglConicGD1::generateCpp( FILE * fp) {
 }
 
 // compute a set of disjunction variables
-std::vector<std::pair<int,int> > CglConicGD1::compute_dis_var_cone(int & dis_var, int & dis_cone) const {
+std::vector<std::pair<int,int> > CglConicGD1::compute_dis_var_cone(
+                                        OsiConicSolverInterface const & si,
+                                        int & dis_var, int & dis_cone) const {
   // return the set of variables that are fractional and in a cone.
   std::vector<std::pair<int,int> > candidates;
-  double const * sol = solver_->getColSolution();
-  int num_col = solver_->getNumCols();
-  char const * col_type = solver_->getColType();
-  int num_cones = solver_->getNumCones();
+  double const * sol = si.getColSolution();
+  int num_col = si.getNumCols();
+  char const * col_type = si.getColType(true);
+  int num_cones = si.getNumCones();
   OsiConeType * cone_types = new OsiConeType[num_cones];
-  solver_->getConeType(cone_types);
+  si.getConeType(cone_types);
   for (int i=0; i<num_col; ++i) {
     if (col_type[i]!= (char) 0) {
       // check wheather it is fractional
       double floor_i = floor(sol[i]);
       double ceil_i = floor_i + 1.0;
       if ((ceil_i-sol[i])>EPS && (sol[i]-floor_i)>EPS) {
-	// variable i is fractional, check whether it is in a cone?
-	for (int j=0; j<num_cones; ++j) {
-	  if (cone_types[j]==OSI_LORENTZ) {
-	    OsiLorentzConeType lctype;
-	    int cone_size;
-	    int * members;
-	    solver_->getConicConstraint(j, lctype, cone_size, members);
-	    for (int k=0; k<cone_size; ++k) {
-	      if (members[k]==i) {
-		dis_var = i;
-		dis_cone = j;
-		candidates.push_back(std::make_pair(i,j));
-	      }
-	    }
-	    delete[] members;
-	  }
-	}
+        // variable i is fractional, check whether it is in a cone?
+        for (int j=0; j<num_cones; ++j) {
+          if (cone_types[j]==OSI_LORENTZ) {
+            OsiLorentzConeType lctype;
+            int cone_size;
+            int * members;
+            si.getConicConstraint(j, lctype, cone_size, members);
+            for (int k=0; k<cone_size; ++k) {
+              if (members[k]==i) {
+                dis_var = i;
+                dis_cone = j;
+                candidates.push_back(std::make_pair(i,j));
+              }
+            }
+            delete[] members;
+          }
+        }
       }
     }
   }
   delete[] cone_types;
   if (candidates.empty()) {
     std::cerr << "Could not find a suitable variable to create disjunction!"
-	      << std::endl;
+              << std::endl;
     //throw std::exception();
     return candidates;
   }
