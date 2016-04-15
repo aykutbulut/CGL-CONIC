@@ -17,6 +17,7 @@
 
 #include <CglConicOA.hpp>
 #include <ColaModel.hpp>
+#include <OsiMskSolverInterface.hpp>
 
 int main(int argc, char ** argv) {
   // create conic solver interface
@@ -54,7 +55,7 @@ int main(int argc, char ** argv) {
   std::cout << "Total number of cuts: " << total_num_cuts << std::endl;
   std::cout << "Objective value:      " << conic_solver->getObjValue() << std::endl;
   std::cout << "CPU time:             "
-	    << double(duration)/double(CLOCKS_PER_SEC) << std::endl;
+            << double(duration)/double(CLOCKS_PER_SEC) << std::endl;
   delete conic_solver;
   return 0;
 }
