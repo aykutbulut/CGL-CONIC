@@ -35200,7 +35200,7 @@ done
 
 # Here list all the files that configure should create (except for the
 # configuration header file)
-                                                                                                    ac_config_files="$ac_config_files Makefile examples/Makefile src/Makefile src/CglConicGD1/Makefile src/CglConicGD2/Makefile src/CglConicMIR/Makefile src/CglConicOA/Makefile src/CglConicIPM/Makefile cglconic.pc cglconic-uninstalled.pc"
+                                                                                                              ac_config_files="$ac_config_files Makefile examples/Makefile src/Makefile src/CglConicGD1/Makefile src/CglConicGD2/Makefile src/CglConicMIR/Makefile src/CglConicOA/Makefile src/CglConicIPM/Makefile src/CglConicIPMint/Makefile cglconic.pc cglconic-uninstalled.pc"
 
           ac_config_files="$ac_config_files doxydoc/doxygen.conf"
 
@@ -36137,6 +36137,7 @@ do
   "src/CglConicMIR/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/CglConicMIR/Makefile" ;;
   "src/CglConicOA/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/CglConicOA/Makefile" ;;
   "src/CglConicIPM/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/CglConicIPM/Makefile" ;;
+  "src/CglConicIPMint/Makefile" ) CONFIG_FILES="$CONFIG_FILES src/CglConicIPMint/Makefile" ;;
   "cglconic.pc" ) CONFIG_FILES="$CONFIG_FILES cglconic.pc" ;;
   "cglconic-uninstalled.pc" ) CONFIG_FILES="$CONFIG_FILES cglconic-uninstalled.pc" ;;
   "doxydoc/doxygen.conf" ) CONFIG_FILES="$CONFIG_FILES doxydoc/doxygen.conf" ;;
