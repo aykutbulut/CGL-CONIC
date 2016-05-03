@@ -36,9 +36,7 @@ class CglConicGD1: public CglConicCutGenerator {
   void clear_cuts();
   // compute disjunction var and the cone var is in.
   std::vector<std::pair<int, int> > compute_dis_var_cone(
-                                    OsiConicSolverInterface const & si,
-                                    int & dis_var,
-                                    int & dis_cone) const;
+                                    OsiConicSolverInterface const & si) const;
   void add_cone_form_cut(OsiConicSolverInterface * solver,
                          CglConicGD1Cut * cut);
   void print_cut(CglConicGD1Cut * cut) const;
