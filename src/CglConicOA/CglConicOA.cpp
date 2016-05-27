@@ -12,12 +12,9 @@
 #include <cmath>
 #include <numeric>
 
-#define CONE_EPS 1e-6
-#define COEF_EPS 1e-5
-
-CglConicOA::CglConicOA()
+CglConicOA::CglConicOA(double coneTol)
   : param_(0) {
-  param_ = new CglConicOAParam();
+  param_ = new CglConicOAParam(coneTol);
 }
 
 // copy constructor
@@ -182,7 +179,7 @@ void CglConicOA::project_one(int n, int num_cones, int const * cone_size,
       std::cerr << "Unknown cone type!"  << std::endl;
       throw std::exception();
     }
-    if (activity<-CONE_EPS) {
+    if (activity<-param_->coneTol()) {
       // current solution is infeasible to conic constraint i.
       feasible[i] = 0;
     }
@@ -263,7 +260,7 @@ void CglConicOA::project_random(int n, int num_cones, int const * cone_size,
       std::cerr << "Unknown cone type!"  << std::endl;
       throw std::exception();
     }
-    if (activity<-CONE_EPS) {
+    if (activity<-param_->coneTol()) {
       // current solution is infeasible to conic constraint i.
       feasible[i] = 0;
     }
@@ -426,7 +423,7 @@ void CglConicOA::project_trig(int n, int num_cones, int const * cone_size,
       std::cerr << "Unknown cone type!"  << std::endl;
       throw std::exception();
     }
-    if (activity<-CONE_EPS) {
+    if (activity<-param_->coneTol()) {
       // current solution is infeasible to conic constraint i.
       feasible[i] = 0;
     }
@@ -516,7 +513,7 @@ void CglConicOA::generate_support_lorentz(int size,
   double * coef = new double[size];
   // cone is in canonical form
   for (int j=1; j<size; ++j) {
-    if ((point[j]<CONE_EPS) && (point[j]>-CONE_EPS)) {
+    if ((point[j]<param_->coneTol()) && (point[j]>-param_->coneTol())) {
       coef[j] = 0.0;
     }
     else {

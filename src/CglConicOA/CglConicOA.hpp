@@ -64,7 +64,7 @@ class CglConicOA: public CglConicCutGenerator {
 	       int num_points) const;
 public:
   // default constructor
-  CglConicOA();
+  CglConicOA(double coneTol);
   // copy constructor
   CglConicOA(const CglConicOA & other);
   // copy assignment operator
@@ -94,6 +94,10 @@ public:
   virtual CglConicCutGenerator * clone() const;
   /// Create C++ lines to get to current state
   virtual std::string generateCpp( FILE * fp);
+private:
+  /// Disable default constructor.
+  CglConicOA();
+
 };
 
 #endif
