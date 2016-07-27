@@ -41,8 +41,8 @@ void CglConicOA::setParam(CglConicOAParam const & param) {
 
 // generate outer approximating hyperplanes for conic constraints
 void CglConicOA::generateCuts(OsiConicSolverInterface const & si,
-			       OsiCuts & cuts,
-			       const CglTreeInfo info) {
+                              OsiCuts & cuts,
+                              const CglTreeInfo info) {
   int num_cones = si.getNumCones();
   OsiLorentzConeType * cone_type = new OsiLorentzConeType[num_cones];
   int ** members = new int*[num_cones];
@@ -63,9 +63,9 @@ void CglConicOA::generateCuts(OsiConicSolverInterface const & si,
 // this function ask to project solution to num_points different points
 // on the conic constraints.
 void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-		  int num_cones, OsiLorentzConeType const * cone_type,
-		  int const * cone_size, int const * const * members,
-		  int num_points) {
+                              int num_cones, OsiLorentzConeType const * cone_type,
+                              int const * cone_size, int const * const * members,
+                              int num_points) {
   int n = si.getNumCols();
   double const * sol = si.getColSolution();
   double ** point = new double*[num_points];
@@ -82,13 +82,13 @@ void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
     // iterate over cones and generate support
     for (int i=0; i<num_cones; ++i) {
       if (feasible[i]) {
-	continue;
+        continue;
       }
       // generate support for cone i
       OsiRowCut * rc = new OsiRowCut();
       double * par_point = new double[cone_size[i]];
       for (int j=0; j<cone_size[i]; ++j) {
-	par_point[j] = point[k][members[i][j]];
+        par_point[j] = point[k][members[i][j]];
       }
       generate_support(cone_size[i], cone_type[i], members[i], par_point, rc);
       cuts.insert(rc);
@@ -105,8 +105,8 @@ void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
 
 // generate cuts for a given linear solver interface
 void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-		  int num_cones, OsiLorentzConeType const * cone_type,
-		  int const * cone_size, int const * const * members) {
+                              int num_cones, OsiLorentzConeType const * cone_type,
+                              int const * cone_size, int const * const * members) {
   generateCuts(si, cuts, num_cones, cone_type, cone_size, members, 1);
 }
 
@@ -125,11 +125,11 @@ std::string CglConicOA::generateCpp( FILE * fp) {
 }
 
 void CglConicOA::project(int n, int num_cones, int const * cone_size,
-			 OsiLorentzConeType const * cone_type,
-			 int const * const * members, double const * sol,
-			 double * point, int * const feasible) const {
+                         OsiLorentzConeType const * cone_type,
+                         int const * const * members, double const * sol,
+                         double * point, int * const feasible) const {
   project_one(n, num_cones, cone_size, cone_type, members, sol, point,
-	      feasible);
+              feasible);
 }
 
 // project given infeasible solution to the cone
@@ -137,9 +137,9 @@ void CglConicOA::project(int n, int num_cones, int const * cone_size,
 // n is size of solution
 // store projected point in point array.
 void CglConicOA::project_one(int n, int num_cones, int const * cone_size,
-			 OsiLorentzConeType const * cone_type,
-			 int const * const * members, double const * sol,
-			 double * point, int * const feasible) const {
+                             OsiLorentzConeType const * cone_type,
+                             int const * const * members, double const * sol,
+                             double * point, int * const feasible) const {
   // copy solution to the point
   std::copy(sol, sol+n, point);
   // iterate over cones and project them
@@ -168,7 +168,7 @@ void CglConicOA::project_one(int n, int num_cones, int const * cone_size,
       throw std::exception();
     }
     sum_rest = std::inner_product(par_sol+start, par_sol+size,
-				  par_sol+start, 0.0);
+                                  par_sol+start, 0.0);
     if (type==OSI_QUAD) {
       activity = par_sol[0] - sqrt(sum_rest);
     }
@@ -213,10 +213,10 @@ void CglConicOA::project_one(int n, int num_cones, int const * cone_size,
 // n is size of solution
 // store projected points in point array.
 void CglConicOA::project_random(int n, int num_cones, int const * cone_size,
-			 OsiLorentzConeType const * cone_type,
-			 int const * const * members, double const * sol,
-			 double * const * point, int * const feasible,
-			 int num_points) const {
+                                OsiLorentzConeType const * cone_type,
+                                int const * const * members, double const * sol,
+                                double * const * point, int * const feasible,
+                                int num_points) const {
   // copy solution to the point
   for (int i=0; i<num_points; ++i) {
     std::copy(sol, sol+n, point[i]);
@@ -249,7 +249,7 @@ void CglConicOA::project_random(int n, int num_cones, int const * cone_size,
       throw std::exception();
     }
     sum_rest = std::inner_product(par_sol+start, par_sol+size,
-				  par_sol+start, 0.0);
+                                  par_sol+start, 0.0);
     if (type==OSI_QUAD) {
       activity = par_sol[0] - sqrt(sum_rest);
     }
@@ -267,6 +267,7 @@ void CglConicOA::project_random(int n, int num_cones, int const * cone_size,
     else {
       // solution is feasible for this cone, keep going with the next one
       feasible[i] = 1;
+      delete[] par_sol;
       continue;
     }
     // project sol to the cone
@@ -308,32 +309,32 @@ void CglConicOA::project_random(int n, int num_cones, int const * cone_size,
     // for each point
     for (int i=1; i<num_points; ++i) {
       for (int k=start; k<cone_size[j]; ++k) {
-	int flip = rand()%2;
-	int perc = rand()%100;
-	if (flip==0) {
-	  point[i][members[j][k]] = point[0][members[j][k]] + eps*perc*point[0][members[j][k]];
-	}
-	else {
-	  point[i][members[j][k]] = point[0][members[j][k]] - eps*perc*point[0][members[j][k]];
-	}
+        int flip = rand()%2;
+        int perc = rand()%100;
+        if (flip==0) {
+          point[i][members[j][k]] = point[0][members[j][k]] + eps*perc*point[0][members[j][k]];
+        }
+        else {
+          point[i][members[j][k]] = point[0][members[j][k]] - eps*perc*point[0][members[j][k]];
+        }
       }
       // compute leading points
       // todo(aykut) copying to a contiguous memory might speed things up here
       double rest = 0.0;
       for (int k=start; k<cone_size[j]; ++k) {
-	rest += point[i][members[j][k]]*point[i][members[j][k]];
+        rest += point[i][members[j][k]]*point[i][members[j][k]];
       }
       if (cone_type[j]==OSI_QUAD) {
-	point[i][members[j][0]] = sqrt(rest);
+        point[i][members[j][0]] = sqrt(rest);
       }
       else if (cone_type[j]==OSI_RQUAD) {
-	double val = sqrt(rest/2.0);
-	point[i][members[j][0]] = val;
-	point[i][members[j][1]] = val;
+        double val = sqrt(rest/2.0);
+        point[i][members[j][0]] = val;
+        point[i][members[j][1]] = val;
       }
       else {
-	std::cerr << "Unknown cone type!" << std::endl;
-	throw std::exception();
+        std::cerr << "Unknown cone type!" << std::endl;
+        throw std::exception();
       }
     }
   }
@@ -367,16 +368,16 @@ void CglConicOA::project_random(int n, int num_cones, int const * cone_size,
 // .
 //
 void CglConicOA::project_trig(int n, int num_cones, int const * cone_size,
-			 OsiLorentzConeType const * cone_type,
-			 int const * const * members, double const * sol,
-			 double * const * point, int * const feasible,
-			 int num_points) const {
+                              OsiLorentzConeType const * cone_type,
+                              int const * const * members, double const * sol,
+                              double * const * point, int * const feasible,
+                              int num_points) const {
   // check cone sizes
   if (num_points>1) {
     for (int i=0; i<num_cones; ++i) {
       if (cone_size[i]!=3) {
-	std::cerr << "This is implemented for cones of size 3 only." << std::endl;
-	throw std::exception();
+        std::cerr << "This is implemented for cones of size 3 only." << std::endl;
+        throw std::exception();
       }
     }
   }
@@ -412,7 +413,7 @@ void CglConicOA::project_trig(int n, int num_cones, int const * cone_size,
       throw std::exception();
     }
     sum_rest = std::inner_product(par_sol+start, par_sol+size,
-				  par_sol+start, 0.0);
+                                  par_sol+start, 0.0);
     if (type==OSI_QUAD) {
       activity = par_sol[0] - sqrt(sum_rest);
     }
@@ -480,10 +481,10 @@ void CglConicOA::project_trig(int n, int num_cones, int const * cone_size,
       point[i][members[j][0]] = x1;
       point[i][members[j][1]] = x1*cos(theta+sign*coef*eps);
       if (x3<0.0) {
-	point[i][members[j][2]] = -1.0*x1*sin(theta+sign*coef*eps);
+        point[i][members[j][2]] = -1.0*x1*sin(theta+sign*coef*eps);
       }
       else {
-	point[i][members[j][2]] = x1*sin(theta+sign*coef*eps);
+        point[i][members[j][2]] = x1*sin(theta+sign*coef*eps);
       }
       //std::cout << "point " << i << std::endl;
       //std::cout << point[i][members[j][0]] << " " << point[i][members[j][1]] << " " << point[i][members[j][2]] << std::endl;
@@ -492,10 +493,10 @@ void CglConicOA::project_trig(int n, int num_cones, int const * cone_size,
 }
 
 void CglConicOA::generate_support(int size,
-				  OsiLorentzConeType type,
-				  int const * members,
-				  double const * point,
-				  OsiRowCut * rc) const {
+                                  OsiLorentzConeType type,
+                                  int const * members,
+                                  double const * point,
+                                  OsiRowCut * rc) const {
   if (type==OSI_QUAD) {
     generate_support_lorentz(size, members, point, rc);
   }
@@ -505,9 +506,9 @@ void CglConicOA::generate_support(int size,
 }
 
 void CglConicOA::generate_support_lorentz(int size,
-					  int const * members,
-					  double const * point,
-					  OsiRowCut * rc) const {
+                                          int const * members,
+                                          double const * point,
+                                          OsiRowCut * rc) const {
   // todo(aykut) check whether p is 0,
   // the method will return to 0 coef if p is 0.
   double * coef = new double[size];
@@ -530,9 +531,9 @@ void CglConicOA::generate_support_lorentz(int size,
 }
 
 void CglConicOA::generate_support_rotated_lorentz(int size,
-						 int const * members,
-						 double const * point,
-						 OsiRowCut * rc) const {
+                                                  int const * members,
+                                                  double const * point,
+                                                  OsiRowCut * rc) const {
   // map point from RLORENTZ space to LORENTZ space, find the projection on LORENTZ,
   // project this point to RLORENTZ and generate cut
   double * coef = new double[size];
