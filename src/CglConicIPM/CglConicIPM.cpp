@@ -13,7 +13,20 @@
 #include <numeric>
 //#include <random>
 
-#include <OsiMosekSolverInterface.hpp>
+#if defined(__OSI_MOSEK__)
+  // use mosek as IPM solver
+  #include <OsiMosekSolverInterface.hpp>
+  //#define IPM_SOLVER OsiMosekSolverInterface
+  typedef OsiMosekSolverInterface IPM_SOLVER;
+#elif defined(__OSI_CPLEX__)
+  // use cplex as IPM solver
+  #include <OsiCplexSolverInterface.hpp>
+  typedef OsiCplexSolverInterface IPM_SOLVER;
+#else
+  // use ipopt
+  #include <OsiIpoptSolverInterface.hpp>
+  typedef OsiIpoptSolverInterface IPM_SOLVER;
+#endif
 
 #define CONE_EPS 1e-6
 #define COEF_EPS 1e-5
@@ -31,8 +44,12 @@ CglConicIPM::CglConicIPM(const CglConicIPM & other) {
   param_ = new CglConicIPMParam(*(other.getParam()));
   OsiConicSolverInterface * os = other.getSolver();
   if (os!=0) {
-    OsiMosekSolverInterface * mosek_solver = dynamic_cast<OsiMosekSolverInterface *>(os);
-    solver_ = new OsiMosekSolverInterface(*mosek_solver);
+    /// notes(aykut) solver interface should provide a constructor
+    /// that copies from a OsiConicSolverInterface object.
+    /// todo(aykut) mosek does not have this copy constructor, add
+    /// it.
+    solver_ = new IPM_SOLVER(os);
+    solver_->setHintParam(OsiDoReducePrint,true,OsiHintDo, 0);
   }
   else {
     solver_ = 0;
@@ -47,8 +64,8 @@ CglConicIPM & CglConicIPM::operator=(const CglConicIPM & rhs) {
   // copy solver
   OsiConicSolverInterface * os = rhs.getSolver();
   if (os!=0) {
-    OsiMosekSolverInterface * mosek_solver = dynamic_cast<OsiMosekSolverInterface *>(os);
-    solver_ = new OsiMosekSolverInterface(*mosek_solver);
+    solver_ = new IPM_SOLVER(os);
+    solver_->setHintParam(OsiDoReducePrint,true,OsiHintDo, 0);
   }
   else {
     solver_ = 0;
@@ -167,7 +184,10 @@ void CglConicIPM::method1(OsiSolverInterface const & si, OsiCuts & cuts,
   if (solver_) {
     delete solver_;
   }
-  solver_ = new OsiMosekSolverInterface();
+  //solver_ = new OsiMosekSolverInterface();
+  solver_ = new IPM_SOLVER();
+  solver_->setHintParam(OsiDoReducePrint,true,OsiHintDo, 0);
+
   // load data to solver
   CoinPackedMatrix const * matrix = si.getMatrixByCol();
   double const * rowlb = si.getRowLower();
@@ -280,7 +300,9 @@ void CglConicIPM::method2(OsiSolverInterface const & si, OsiCuts & cuts,
   if (solver_) {
     delete solver_;
   }
-  solver_ = new OsiMosekSolverInterface();
+  solver_ = new IPM_SOLVER();
+  solver_->setHintParam(OsiDoReducePrint,true,OsiHintDo, 0);
+
   double infinity = solver_->getInfinity();
   // add linear constraints and bounds
   int num_cols = si.getNumCols();
@@ -501,7 +523,9 @@ void CglConicIPM::method3(OsiSolverInterface const & si, OsiCuts & cuts,
   if (solver_) {
     delete solver_;
   }
-  solver_ = new OsiMosekSolverInterface();
+  solver_ = new IPM_SOLVER();
+  solver_->setHintParam(OsiDoReducePrint,true,OsiHintDo, 0);
+
   // load data to solver
   CoinPackedMatrix const * matrix = si.getMatrixByCol();
   double const * rowlb = si.getRowLower();

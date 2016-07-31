@@ -10,6 +10,30 @@ AUTOMAKE_OPTIONS = foreign
 SUBDIRS = $(CGLCONIC_SUBDIRS)
 
 ########################################################################
+#                           Common Flags                               #
+########################################################################
+
+LDADD = $(CGLCONICLIB_LIBS)
+DEPENDENCIES = $(CGLCONICLIB_DEPENDENCIES)
+AM_CPPFLAGS = $(CGLCONICLIB_CFLAGS)
+
+########################################################################
+#                    Define Macros for IPM Solver                      #
+########################################################################
+
+if IPOPT_IPM_SOLVER
+  AM_CPPFLAGS += -D__IPOPT__
+endif
+
+if MOSEK_IPM_SOLVER
+  AM_CPPFLAGS += -D__OSI_MOSEK__
+endif
+
+if CPLEX_IPM_SOLVER
+  AM_CPPFLAGS += -D__OSI_CPLEX__
+endif
+
+########################################################################
 #                               libCglConic                            #
 ########################################################################
 
@@ -23,28 +47,20 @@ libCglConic_la_SOURCES = \
 	CglConicCutGenerator.cpp CglConicCutGenerator.hpp\
 	CglConicParam.cpp CglConicParam.hpp
 
-# This is for libtool (on Windows)
-libCglConic_la_LDFLAGS = $(LT_LDFLAGS)
-
-# We want to have all the sublibraries from the Cgl subprojects collected into
-# this library
+# We want to have all the sublibraries from the CglConic subprojects
+# collected into this library
 libCglConic_la_LIBADD = $(CGLCONIC_SUBLIBS)
 if DEPENDENCY_LINKING
 libCglConic_la_LIBADD += $(CGLCONICLIB_LIBS)
 endif
 
+# This is for libtool (on Windows)
+libCglConic_la_LDFLAGS = $(LT_LDFLAGS)
+
 # Since automake is not doing this on its own, we need to declare the
 # dependencies to the subdirectory libraries here
 libCglConic_la_DEPENDENCIES = $(CGLCONIC_SUBLIBS)
 
-# Here list all include flags, relative to this "srcdir" directory.  This
-# "cygpath" stuff is necessary to compile with native compilers on Windows.
-AM_CPPFLAGS = $(COINUTILS_CFLAGS)\
-	      $(OSI_CFLAGS)\
-	      $(OSICONIC_CFLAGS)\
-	      $(CGL_CFLAGS)\
-	      $(COLA_CFLAGS)\
-	      $(OSIMOSEK_CFLAGS)
 
 # This line is necessary to allow VPATH compilation
 DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`

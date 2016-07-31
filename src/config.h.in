@@ -33,8 +33,14 @@
 /* Define to 1 if the Cola package is available */
 #undef COIN_HAS_COLA
 
+/* Define to 1 if the Cplex package is available */
+#undef COIN_HAS_CPLEX
+
 /* If defined, the LAPACK Library is available. */
 #undef COIN_HAS_LAPACK
+
+/* Define to 1 if the Mosek package is available */
+#undef COIN_HAS_MOSEK
 
 /* Define to 1 if the Osi package is available */
 #undef COIN_HAS_OSI
@@ -54,8 +60,8 @@
 /* Define to 1 if the OsiGlpk package is available */
 #undef COIN_HAS_OSIGLPK
 
-/* Define to 1 if the OsiMosek package is available */
-#undef COIN_HAS_OSIMOSEK
+/* Define to 1 if the OsiIpopt package is available */
+#undef COIN_HAS_OSIIPOPT
 
 /* Define to 1 if the OsiMsk package is available */
 #undef COIN_HAS_OSIMSK

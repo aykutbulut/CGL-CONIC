@@ -84,11 +84,70 @@ AC_COIN_CHECK_PACKAGE(Cola,  [cola],  [CglConicLib])
 if test $coin_has_cola != yes ; then
   AC_MSG_ERROR([Required package Cola not available.])
 fi
-AC_COIN_CHECK_PACKAGE(OsiMosek,  [osimosek],  [CglConicLib])
-if test $coin_has_osimosek != yes ; then
-  AC_MSG_ERROR([Required package OsiMosek not available.])
+AC_COIN_CHECK_PACKAGE(OsiIpopt,  [osiipopt],  [CglConicLib])
+if test $coin_has_osiipopt != yes ; then
+  AC_MSG_ERROR([Required package OsiIpopt not available.])
 fi
 
+
+#############################################################################
+#                            Third party solvers                            #
+#############################################################################
+
+# Check which third party solvers are available
+AC_COIN_CHECK_PACKAGE(Cplex,  [osicplex],  [CglConicLib])
+AC_COIN_CHECK_PACKAGE(Mosek,  [osimosek],  [CglConicLib])
+
+
+
+#############################################################################
+#                      Check for IPM solver                                 #
+#############################################################################
+AC_MSG_CHECKING([for Cgl-Conic default IPM solver])
+AC_ARG_WITH([ipm-solver],
+[AC_HELP_STRING([--with-ipm-solver@<:@=ipmsolver@:>@],
+		[specify the IPM solver in small
+		letters(default socosolver=ipopt)])],
+		[cglconic_ipm_solver=$withval],[cglconic_ipm_solver=ipopt])
+
+found_package=true
+case $cglconic_ipm_solver in
+   ipopt)
+    AC_MSG_RESULT(Ipopt)
+     if [test $coin_has_coindepend = unavailable || test $coin_has_coindepend = skipping]; \
+     then
+	 found_package=false
+     fi
+   ;;
+   mosek)
+     AC_MSG_RESULT(Mosek)
+     if test $coin_has_mosek = false; \
+     then
+	 found_package=false
+     fi
+   ;;
+   cplex)
+     AC_MSG_RESULT(Cplex)
+     if test $coin_has_cplex = false; \
+     then
+	 found_package=false
+     fi
+   ;;
+  *)
+    AC_MSG_ERROR(Unknown IPM solver!)
+  ;;
+esac
+
+if test $found_package = false; then
+  AC_MSG_ERROR(Couldn't find the $cglconic_ipm_solver package!)
+fi
+
+AM_CONDITIONAL(IPOPT_IPM_SOLVER,[test $cglconic_ipm_solver = ipopt &&
+test $coin_has_coindepend = yes])
+AM_CONDITIONAL(MOSEK_IPM_SOLVER,[test $cglconic_ipm_solver = mosek &&
+test $coin_has_mosek = yes])
+AM_CONDITIONAL(CPLEX_IPM_SOLVER,[test $cglconic_ipm_solver = cplex &&
+test $coin_has_cplex = yes])
 
 dnl AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
 

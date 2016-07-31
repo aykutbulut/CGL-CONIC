@@ -13,7 +13,20 @@
 #include <numeric>
 //#include <random>
 
-#include <OsiMosekSolverInterface.hpp>
+#if defined(__OSI_MOSEK__)
+  // use mosek as IPM solver
+  #include <OsiMosekSolverInterface.hpp>
+  //#define IPM_SOLVER OsiMosekSolverInterface
+  typedef OsiMosekSolverInterface IPM_SOLVER;
+#elif defined(__OSI_CPLEX__)
+  // use cplex as IPM solver
+  #include <OsiCplexSolverInterface.hpp>
+  typedef OsiCplexSolverInterface IPM_SOLVER;
+#else
+  // use ipopt
+  #include <OsiIpoptSolverInterface.hpp>
+  typedef OsiIpoptSolverInterface IPM_SOLVER;
+#endif
 
 #define CONE_EPS 1e-6
 #define COEF_EPS 1e-5
@@ -31,8 +44,7 @@ CglConicIPMint::CglConicIPMint(const CglConicIPMint & other) {
   param_ = new CglConicIPMintParam(*(other.getParam()));
   OsiConicSolverInterface * os = other.getSolver();
   if (os!=0) {
-    OsiMosekSolverInterface * mosek_solver = dynamic_cast<OsiMosekSolverInterface *>(os);
-    solver_ = new OsiMosekSolverInterface(*mosek_solver);
+    solver_ = new IPM_SOLVER(os);
   }
   else {
     solver_ = 0;
@@ -47,8 +59,7 @@ CglConicIPMint & CglConicIPMint::operator=(const CglConicIPMint & rhs) {
   // copy solver
   OsiConicSolverInterface * os = rhs.getSolver();
   if (os!=0) {
-    OsiMosekSolverInterface * mosek_solver = dynamic_cast<OsiMosekSolverInterface *>(os);
-    solver_ = new OsiMosekSolverInterface(*mosek_solver);
+    solver_ = new IPM_SOLVER(os);
   }
   else {
     solver_ = 0;
@@ -167,7 +178,7 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
   if (solver_) {
     delete solver_;
   }
-  solver_ = new OsiMosekSolverInterface();
+  solver_ = new IPM_SOLVER();
   // load data to solver
   CoinPackedMatrix const * matrix = si.getMatrixByCol();
   double const * rowlb = si.getRowLower();
@@ -280,7 +291,7 @@ void CglConicIPMint::method2(OsiSolverInterface const & si, OsiCuts & cuts,
   if (solver_) {
     delete solver_;
   }
-  solver_ = new OsiMosekSolverInterface();
+  solver_ = new IPM_SOLVER();
   double infinity = solver_->getInfinity();
   // add linear constraints and bounds
   int num_cols = si.getNumCols();
@@ -501,7 +512,7 @@ void CglConicIPMint::method3(OsiSolverInterface const & si, OsiCuts & cuts,
   if (solver_) {
     delete solver_;
   }
-  solver_ = new OsiMosekSolverInterface();
+  solver_ = new IPM_SOLVER();
   // load data to solver
   CoinPackedMatrix const * matrix = si.getMatrixByCol();
   double const * rowlb = si.getRowLower();
