@@ -60,60 +60,38 @@ AC_COIN_INIT_AUTO_TOOLS
 #############################################################################
 #                            COIN-OR components                             #
 #############################################################################
-AC_COIN_CHECK_PACKAGE(CoinUtils, [coinutils], [CglConicLib])
-if test $coin_has_coinutils != yes ; then
-  AC_MSG_ERROR([Required package CoinUtils not available.])
+AC_COIN_CHECK_PACKAGE(CoinDepend, [coinutils osi osi-clp osiconic cgl cola osiipopt], [CglConicLib])
+if test $coin_has_coindepend != yes ; then
+  AC_MSG_ERROR([Required packages not available.])
 fi
-AC_COIN_CHECK_PACKAGE(Osi, [osi], [CglConicLib])
-if test $coin_has_osi != yes ; then
-  AC_MSG_ERROR([Required package Osi not available.])
-fi
-AC_COIN_CHECK_PACKAGE(OsiClp,    [osi-clp],   [CglConicLib])
-if test $coin_has_osiclp != yes ; then
-  AC_MSG_ERROR([Required package OsiClp not available.])
-fi
-AC_COIN_CHECK_PACKAGE(OsiConic,  [osiconic],  [CglConicLib])
-if test $coin_has_osiconic != yes ; then
-  AC_MSG_ERROR([Required package OsiConic not available.])
-fi
-AC_COIN_CHECK_PACKAGE(Cgl,  [cgl],  [CglConicLib])
-if test $coin_has_cgl != yes ; then
-  AC_MSG_ERROR([Required package Cgl not available.])
-fi
-AC_COIN_CHECK_PACKAGE(Cola,  [cola],  [CglConicLib])
-if test $coin_has_cola != yes ; then
-  AC_MSG_ERROR([Required package Cola not available.])
-fi
-AC_COIN_CHECK_PACKAGE(OsiIpopt,  [osiipopt],  [CglConicLib])
-if test $coin_has_osiipopt != yes ; then
-  AC_MSG_ERROR([Required package OsiIpopt not available.])
-fi
+AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
 
+dnl AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
+dnl AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
 
 #############################################################################
 #                            Third party solvers                            #
 #############################################################################
 
 # Check which third party solvers are available
-AC_COIN_CHECK_PACKAGE(Cplex,  [osicplex],  [CglConicLib])
-AC_COIN_CHECK_PACKAGE(Mosek,  [osimosek],  [CglConicLib])
-
+AC_COIN_CHECK_PACKAGE(Cplex, [osicplex], [CglConicLib])
+AC_COIN_CHECK_PACKAGE(Mosek, [osimosek], [CglConicLib])
 
 
 #############################################################################
 #                      Check for IPM solver                                 #
 #############################################################################
-AC_MSG_CHECKING([for Cgl-Conic default IPM solver])
+AC_MSG_CHECKING([for CglConic default IPM solver])
 AC_ARG_WITH([ipm-solver],
 [AC_HELP_STRING([--with-ipm-solver@<:@=ipmsolver@:>@],
 		[specify the IPM solver in small
-		letters(default socosolver=ipopt)])],
+		letters(default ipmsolver=ipopt)])],
 		[cglconic_ipm_solver=$withval],[cglconic_ipm_solver=ipopt])
 
 found_package=true
 case $cglconic_ipm_solver in
    ipopt)
-    AC_MSG_RESULT(Ipopt)
+     AC_MSG_RESULT(Ipopt)
      if [test $coin_has_coindepend = unavailable || test $coin_has_coindepend = skipping]; \
      then
 	 found_package=false
@@ -133,9 +111,9 @@ case $cglconic_ipm_solver in
 	 found_package=false
      fi
    ;;
-  *)
-    AC_MSG_ERROR(Unknown IPM solver!)
-  ;;
+   *)
+   AC_MSG_ERROR(Unknown IPM solver!)
+   ;;
 esac
 
 if test $found_package = false; then
@@ -149,11 +127,6 @@ test $coin_has_mosek = yes])
 AM_CONDITIONAL(CPLEX_IPM_SOLVER,[test $cglconic_ipm_solver = cplex &&
 test $coin_has_cplex = yes])
 
-dnl AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
-
-AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
-AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
-
 #############################################################################
 #                       Solvers for unittesting                             #
 #############################################################################
@@ -162,14 +135,14 @@ AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
 # need to know which are available in order to compile the unitTest
 # correctly.
 
-AC_COIN_CHECK_PACKAGE(OsiCpx,  [osi-cplex])
-AC_COIN_CHECK_PACKAGE(OsiGlpk, [osi-glpk])
-#AC_COIN_CHECK_PACKAGE(OsiGrb,  [osi-gurobi])
-AC_COIN_CHECK_PACKAGE(OsiMsk,  [osi-mosek])
-AC_COIN_CHECK_PACKAGE(OsiXpr,  [osi-xpress])
-AC_COIN_CHECK_PACKAGE(OsiVol,  [osi-vol])
-AC_COIN_CHECK_PACKAGE(OsiDyLP, [osi-dylp])
-#AC_COIN_CHECK_PACKAGE(OsiSpx,  [osi-soplex])
+dnl AC_COIN_CHECK_PACKAGE(OsiCpx,  [osi-cplex])
+dnl AC_COIN_CHECK_PACKAGE(OsiGlpk, [osi-glpk])
+dnl #AC_COIN_CHECK_PACKAGE(OsiGrb,  [osi-gurobi])
+dnl AC_COIN_CHECK_PACKAGE(OsiMsk,  [osi-mosek])
+dnl AC_COIN_CHECK_PACKAGE(OsiXpr,  [osi-xpress])
+dnl AC_COIN_CHECK_PACKAGE(OsiVol,  [osi-vol])
+dnl AC_COIN_CHECK_PACKAGE(OsiDyLP, [osi-dylp])
+dnl #AC_COIN_CHECK_PACKAGE(OsiSpx,  [osi-soplex])
 
 #############################################################################
 #                  System header                                            #

@@ -21,63 +21,17 @@
 /* Define to the debug verbosity level (0 is no output) */
 #undef COIN_CGLCONIC_VERBOSITY
 
-/* If defined, the BLAS Library is available. */
-#undef COIN_HAS_BLAS
-
-/* Define to 1 if the Cgl package is available */
-#undef COIN_HAS_CGL
-
-/* Define to 1 if the CoinUtils package is available */
-#undef COIN_HAS_COINUTILS
-
-/* Define to 1 if the Cola package is available */
-#undef COIN_HAS_COLA
+/* Define to 1 if the CoinDepend package is available */
+#undef COIN_HAS_COINDEPEND
 
 /* Define to 1 if the Cplex package is available */
 #undef COIN_HAS_CPLEX
 
-/* If defined, the LAPACK Library is available. */
-#undef COIN_HAS_LAPACK
-
 /* Define to 1 if the Mosek package is available */
 #undef COIN_HAS_MOSEK
 
-/* Define to 1 if the Osi package is available */
-#undef COIN_HAS_OSI
-
-/* Define to 1 if the OsiClp package is available */
-#undef COIN_HAS_OSICLP
-
-/* Define to 1 if the OsiConic package is available */
-#undef COIN_HAS_OSICONIC
-
-/* Define to 1 if the OsiCpx package is available */
-#undef COIN_HAS_OSICPX
-
-/* Define to 1 if the OsiDyLP package is available */
-#undef COIN_HAS_OSIDYLP
-
-/* Define to 1 if the OsiGlpk package is available */
-#undef COIN_HAS_OSIGLPK
-
-/* Define to 1 if the OsiIpopt package is available */
-#undef COIN_HAS_OSIIPOPT
-
-/* Define to 1 if the OsiMsk package is available */
-#undef COIN_HAS_OSIMSK
-
-/* Define to 1 if the OsiVol package is available */
-#undef COIN_HAS_OSIVOL
-
-/* Define to 1 if the OsiXpr package is available */
-#undef COIN_HAS_OSIXPR
-
-/* Define to dummy `main' function (if any) required to link to the Fortran
-   libraries. */
-#undef F77_DUMMY_MAIN
-
-/* Define if F77 and FC dummy `main' functions are identical. */
-#undef FC_DUMMY_MAIN_EQ_F77
+/* Define to 1 if the Sample package is available */
+#undef COIN_HAS_SAMPLE
 
 /* Define to 1 if you have the <cfloat> header file. */
 #undef HAVE_CFLOAT
