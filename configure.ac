@@ -60,10 +60,41 @@ AC_COIN_INIT_AUTO_TOOLS
 #############################################################################
 #                            COIN-OR components                             #
 #############################################################################
-AC_COIN_CHECK_PACKAGE(CoinDepend, [coinutils osi osi-clp osiconic cgl cola osiipopt], [CglConicLib])
-if test $coin_has_coindepend != yes ; then
-  AC_MSG_ERROR([Required packages not available.])
+AC_COIN_CHECK_PACKAGE(CoinUtils, [coinutils], [CglConicLib])
+if test $coin_has_coinutils != yes ; then
+  AC_MSG_ERROR([Required package CoinUtils is not available.])
 fi
+
+AC_COIN_CHECK_PACKAGE(Osi, [osi], [CglConicLib])
+if test $coin_has_osi != yes ; then
+  AC_MSG_ERROR([Required package Osi is not available.])
+fi
+
+AC_COIN_CHECK_PACKAGE(OsiClp, [osi-clp], [CglConicLib])
+if test $coin_has_osiclp != yes ; then
+  AC_MSG_ERROR([Required package OsiClp is not available.])
+fi
+
+AC_COIN_CHECK_PACKAGE(Cgl, [cgl], [CglConicLib])
+if test $coin_has_cgl != yes ; then
+  AC_MSG_ERROR([Required package Cgl is not available.])
+fi
+
+AC_COIN_CHECK_PACKAGE(OsiConic, [osiconic], [CglConicLib])
+if test $coin_has_osiconic != yes ; then
+  AC_MSG_ERROR([Required package OsiConic is not available.])
+fi
+
+AC_COIN_CHECK_PACKAGE(Cola, [cola], [CglConicLib])
+if test $coin_has_cola != yes ; then
+  AC_MSG_ERROR([Required package Cola is not available.])
+fi
+
+AC_COIN_CHECK_PACKAGE(OsiIpopt, [osiipopt], [CglConicLib])
+if test $coin_has_osiipopt != yes ; then
+  AC_MSG_ERROR([Required package OsiIpopt is not available.])
+fi
+
 AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
 
 dnl AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
@@ -92,7 +123,7 @@ found_package=true
 case $cglconic_ipm_solver in
    ipopt)
      AC_MSG_RESULT(Ipopt)
-     if [test $coin_has_coindepend = unavailable || test $coin_has_coindepend = skipping]; \
+     if [test $coin_has_osiipopt = unavailable || test $coin_has_osiipopt = skipping]; \
      then
 	 found_package=false
      fi
