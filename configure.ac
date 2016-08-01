@@ -97,8 +97,8 @@ fi
 
 AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
 
-dnl AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
-dnl AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
+AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
+AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
 
 #############################################################################
 #                            Third party solvers                            #

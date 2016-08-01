@@ -21,6 +21,9 @@
 /* Define to the debug verbosity level (0 is no output) */
 #undef COIN_CGLCONIC_VERBOSITY
 
+/* If defined, the BLAS Library is available. */
+#undef COIN_HAS_BLAS
+
 /* Define to 1 if the Cgl package is available */
 #undef COIN_HAS_CGL
 
@@ -32,6 +35,9 @@
 
 /* Define to 1 if the Cplex package is available */
 #undef COIN_HAS_CPLEX
+
+/* If defined, the LAPACK Library is available. */
+#undef COIN_HAS_LAPACK
 
 /* Define to 1 if the Mosek package is available */
 #undef COIN_HAS_MOSEK
@@ -50,6 +56,13 @@
 
 /* Define to 1 if the Sample package is available */
 #undef COIN_HAS_SAMPLE
+
+/* Define to dummy `main' function (if any) required to link to the Fortran
+   libraries. */
+#undef F77_DUMMY_MAIN
+
+/* Define if F77 and FC dummy `main' functions are identical. */
+#undef FC_DUMMY_MAIN_EQ_F77
 
 /* Define to 1 if you have the <cfloat> header file. */
 #undef HAVE_CFLOAT
