@@ -29,13 +29,16 @@ see [related paper][Cezik and Iyengar 2005]
 [Stubbs and Mehrotra 1999]: http://link.springer.com/article/10.1007/s10107-015-0903-4
 [Cezik and Iyengar 2005]: http://link.springer.com/article/10.1007/s10107-005-0578-3
 
+
+CGL-Conic is used by [DisCO][6] to solve MISOCO problems.
+
 # Installing CGL-Conic
 
 ## Basic installation
 
 CGL-Conic is tested/works in Linux environment only for now. You can use
 COIN-OR BuildTools fetch and build utility for building and installing
-CGL-Conic. After cloning CGL-Conic typing following commands should work.
+CGL-Conic. After cloning CGL-Conic, typing following commands should work.
 
 ```shell
 git clone --branch=stable/0.8 https://github.com/coin-or-tools/BuildTools
