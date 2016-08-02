@@ -28,7 +28,7 @@ see [related paper][Cezik and Iyengar 2005]
 [Karzan and Yildiz 2015]: http://link.springer.com/article/10.1007/s10107-015-0903-4
 [Stubbs and Mehrotra 1999]: http://link.springer.com/article/10.1007/s10107-015-0903-4
 [Cezik and Iyengar 2005]: http://link.springer.com/article/10.1007/s10107-005-0578-3
-
+[6]: https://github.com/aykutbulut/DisCO
 
 CGL-Conic is used by [DisCO][6] to solve MISOCO problems.
 
