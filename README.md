@@ -12,7 +12,7 @@ see [related paper][Belotti et. al. 2015]
 * Conic mixed-integer rounding cuts by Atamturk and Narayanan,
 see [related paper][Atamturk and Narayanan 2008]
 * Outer approximation cuts, related paper to be published soon.
-* IPM cuts, related paper to be published soon.
+* Interior Point Method (IPM) approximation cuts, related paper to be published soon.
 
 Cut procedures that are considered for implementation.
 
@@ -54,3 +54,24 @@ CGL-Conic can find dependencies using ```pkg-config```. If your ```.pc``` files
 are at your ```PKG_CONFIG_PATH``` CGL-Conic configure script will find
 them. Running ```make install``` should work once the configure script is
 successful.
+
+## Specifying an IPM Solver
+
+Some cut implementations in CGL-Conic depends on solving SOCO problems using
+IPM method. You can specify the solver to use for this purpose. CGL-Conic uses
+Ipopt by default. You can use Cplex[1] or Mosek[2] through their OsiConic
+interface.
+
+[1]: https://github.com/aykutbulut/OsiCplex
+[2]: https://github.com/aykutbulut/OSI-MOSEK
+
+To specify the solver, you need to give ```--with-ipm-solver``` flag to
+configure script. For example, following command configures OSI-Conic with
+Mosek.
+
+```shell
+./configure --with-ipm-solver=mosek
+```
+
+Similarly you can use ```cplex``` or ```ipopt``` instead of ```mosek```. If no
+ipm solver is specified CGL-Conic will use Ipopt.
