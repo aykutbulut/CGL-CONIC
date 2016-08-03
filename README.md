@@ -74,4 +74,4 @@ Mosek.
 ```
 
 Similarly you can use ```cplex``` or ```ipopt``` instead of ```mosek```. If no
-ipm solver is specified CGL-Conic will use Ipopt.
+IPM solver is specified CGL-Conic will use Ipopt.
