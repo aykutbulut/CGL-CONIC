@@ -53,9 +53,13 @@ AC_COIN_DEBUG_COMPILE(CglConic)
 
 # Get the name of the C++ compiler and appropriate compiler options
 AC_COIN_PROG_CXX
+AC_LANG_PUSH(C++)
 
 # Initialize automake and libtool
 AC_COIN_INIT_AUTO_TOOLS
+
+# Get the EXEXT variable for CYGWIN
+AC_EXEEXT
 
 #############################################################################
 #                            COIN-OR components                             #
@@ -95,11 +99,6 @@ if test $coin_has_osiipopt != yes ; then
   AC_MSG_ERROR([Required package OsiIpopt is not available.])
 fi
 
-AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
-
-AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
-AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
-
 #############################################################################
 #                            Third party solvers                            #
 #############################################################################
@@ -108,16 +107,15 @@ AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
 AC_COIN_CHECK_PACKAGE(Cplex, [osicplex], [CglConicLib])
 AC_COIN_CHECK_PACKAGE(Mosek, [osimosek], [CglConicLib])
 
-
 #############################################################################
 #                      Check for IPM solver                                 #
 #############################################################################
 AC_MSG_CHECKING([for CglConic default IPM solver])
 AC_ARG_WITH([ipm-solver],
 [AC_HELP_STRING([--with-ipm-solver@<:@=ipmsolver@:>@],
-		[specify the IPM solver in small
-		letters(default ipmsolver=ipopt)])],
-		[cglconic_ipm_solver=$withval],[cglconic_ipm_solver=ipopt])
+                [specify the IPM solver in small
+                letters(default ipmsolver=ipopt)])],
+                [cglconic_ipm_solver=$withval],[cglconic_ipm_solver=ipopt])
 
 found_package=true
 case $cglconic_ipm_solver in
@@ -125,21 +123,21 @@ case $cglconic_ipm_solver in
      AC_MSG_RESULT(Ipopt)
      if [test $coin_has_osiipopt = unavailable || test $coin_has_osiipopt = skipping]; \
      then
-	 found_package=false
+         found_package=false
      fi
    ;;
    mosek)
      AC_MSG_RESULT(Mosek)
      if test $coin_has_mosek = false; \
      then
-	 found_package=false
+         found_package=false
      fi
    ;;
    cplex)
      AC_MSG_RESULT(Cplex)
      if test $coin_has_cplex = false; \
      then
-	 found_package=false
+         found_package=false
      fi
    ;;
    *)
@@ -157,6 +155,11 @@ AM_CONDITIONAL(MOSEK_IPM_SOLVER,[test $cglconic_ipm_solver = mosek &&
 test $coin_has_mosek = yes])
 AM_CONDITIONAL(CPLEX_IPM_SOLVER,[test $cglconic_ipm_solver = cplex &&
 test $coin_has_cplex = yes])
+
+# Check thirdparty libraries
+AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
+AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
+AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
 
 #############################################################################
 #                       Solvers for unittesting                             #
@@ -217,7 +220,7 @@ AC_COIN_VPATH_LINK(examples/ex1.mps)
 #                  Check for doxygen                                        #
 #############################################################################
 
-AC_COIN_DOXYGEN(CoinUtils Osi OsiConic Cgl)
+AC_COIN_DOXYGEN(CoinUtils Osi OsiConic Cgl OsiIpopt)
 
 ##############################################################################
 #                   Finishing up by writing all the output                   #
@@ -229,16 +232,16 @@ dnl AC_COIN_VPATH_LINK([test/CglTestData/capPlan1.mps test/CglTestData/l152lav.m
 # Here list all the files that configure should create (except for the
 # configuration header file)
 AC_CONFIG_FILES([Makefile
-		 examples/Makefile
-		 src/Makefile
-		 src/CglConicGD1/Makefile
-		 src/CglConicGD2/Makefile
-		 src/CglConicMIR/Makefile
-		 src/CglConicOA/Makefile
-		 src/CglConicIPM/Makefile
-		 src/CglConicIPMint/Makefile
-		 cglconic.pc
-		 cglconic-uninstalled.pc])
+                 examples/Makefile
+                 src/Makefile
+                 src/CglConicGD1/Makefile
+                 src/CglConicGD2/Makefile
+                 src/CglConicMIR/Makefile
+                 src/CglConicOA/Makefile
+                 src/CglConicIPM/Makefile
+                 src/CglConicIPMint/Makefile
+                 cglconic.pc
+                 cglconic-uninstalled.pc])
 AC_CONFIG_FILES([doxydoc/doxygen.conf])
 
 # Here put the location and name of the configuration header file

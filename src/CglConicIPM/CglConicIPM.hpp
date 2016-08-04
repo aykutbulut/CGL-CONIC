@@ -28,61 +28,61 @@ class CglConicIPM: public CglConicCutGenerator {
   OsiConicSolverInterface * solver_;
   // generate cuts for a linear solver interface
   void method1(OsiSolverInterface const & si, OsiCuts & cuts,
-	       int num_cones, OsiLorentzConeType const * cone_type,
-	       int const * cone_size, int const * const * members,
-	       int num_points);
+               int num_cones, OsiLorentzConeType const * cone_type,
+               int const * cone_size, int const * const * members,
+               int num_points);
   void method2(OsiSolverInterface const & si, OsiCuts & cuts,
-	       int num_cones, OsiLorentzConeType const * cone_type,
-	       int const * cone_size, int const * const * members,
-	       int num_points);
+               int num_cones, OsiLorentzConeType const * cone_type,
+               int const * cone_size, int const * const * members,
+               int num_points);
   void method3(OsiSolverInterface const & si, OsiCuts & cuts,
-	       int num_cones, OsiLorentzConeType const * cone_type,
-	       int const * cone_size, int const * const * members,
-	       int num_points);
+               int num_cones, OsiLorentzConeType const * cone_type,
+               int const * cone_size, int const * const * members,
+               int num_points);
   void add_supports(int size, double const * sol, int num_cones,
-		OsiLorentzConeType const * cone_type,
-		int const * cone_size, int const * const * members,
-		OsiCuts & cuts) const;
+                OsiLorentzConeType const * cone_type,
+                int const * cone_size, int const * const * members,
+                OsiCuts & cuts) const;
   void add_cuts(int size, double const * sol, int num_cones,
-		OsiLorentzConeType const * cone_type,
-		int const * cone_size, int const * const * members,
-		OsiCuts & cuts) const;
+                OsiLorentzConeType const * cone_type,
+                int const * cone_size, int const * const * members,
+                OsiCuts & cuts) const;
   // generate cuts where  point is on the cone
   void add_cuts2(int num_cols, double const * point, int num_cones,
-		 OsiLorentzConeType const * cone_type,
-		 int const * cone_size,
-		 int const * const * members, OsiCuts & cuts);
+                 OsiLorentzConeType const * cone_type,
+                 int const * cone_size,
+                 int const * const * members, OsiCuts & cuts);
   // private functions
   // return 0 if sol is infeasible for the cone, nonzero otherwise
   int generate_support(int size, OsiLorentzConeType type,
-		       int const * members,
-		       double const * sol,
-		       OsiRowCut * rc) const;
+                       int const * members,
+                       double const * sol,
+                       OsiRowCut * rc) const;
   int generate_support_lorentz(int size,
-			       int const * members,
-			       double const * sol,
-			       OsiRowCut * rc) const;
+                               int const * members,
+                               double const * sol,
+                               OsiRowCut * rc) const;
   int generate_support_rotated_lorentz(int size,
-				       int const * members,
-				       double const * sol,
-				       OsiRowCut * rc) const;
+                                       int const * members,
+                                       double const * sol,
+                                       OsiRowCut * rc) const;
   void create_rand_points(int num_cols, double const * sol,
-			  int num_cones,
-			  OsiLorentzConeType const * cone_type,
-			  int const * cone_size,
-			  int const * const * members,
-			  double ** points, int num_points) const;
+                          int num_cones,
+                          OsiLorentzConeType const * cone_type,
+                          int const * cone_size,
+                          int const * const * members,
+                          double ** points, int num_points) const;
 
   void create_rand_point2(int num_cols, double const * sol,
-			  int num_cones,
-			  OsiLorentzConeType const * cone_type,
-			  int const * cone_size,
-			  int const * const * members,
-			  double * point) const;
+                          int num_cones,
+                          OsiLorentzConeType const * cone_type,
+                          int const * cone_size,
+                          int const * const * members,
+                          double * point) const;
   void create_rand_point3(int cone_size, double const * par_sol,
-			  OsiLorentzConeType cone_type,
-			  int const * members,
-			  double * par_point) const;
+                          OsiLorentzConeType cone_type,
+                          int const * members,
+                          double * par_point) const;
 public:
   // default constructor
   CglConicIPM();
@@ -100,13 +100,13 @@ public:
   OsiConicSolverInterface * getSolver() const;
   // generate linear/ordinary cuts.
   virtual void generateCuts(OsiConicSolverInterface const & si,
-			    OsiCuts & cs,
-			    const CglTreeInfo info = CglTreeInfo());
+                            OsiCuts & cs,
+                            const CglTreeInfo info = CglTreeInfo());
   // generate cuts for a linear solver interface
   virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-			    int num_cones, OsiLorentzConeType const * cone_type,
-			    int const * cone_size, int const * const * members,
-			    int num_points);
+                            int num_cones, OsiLorentzConeType const * cone_type,
+                            int const * cone_size, int const * const * members,
+                            int num_points);
   /// Return true if needs optimal basis to do cuts
   virtual bool needsOptimalBasis() const { return false; }
   /// Clone

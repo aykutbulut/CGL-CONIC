@@ -31,6 +31,18 @@ AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/..` $(COINUTILS_CFLAGS)\
 	$(CGL_CFLAGS)\
 	$(OSIMOSEK_CFLAGS)
 
+if IPOPT_IPM_SOLVER
+  AM_CPPFLAGS += -D__IPOPT__
+endif
+
+if MOSEK_IPM_SOLVER
+  AM_CPPFLAGS += -D__OSI_MOSEK__
+endif
+
+if CPLEX_IPM_SOLVER
+  AM_CPPFLAGS += -D__OSI_CPLEX__
+endif
+
 # This line is necessary to allow VPATH compilation
 DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I..
 

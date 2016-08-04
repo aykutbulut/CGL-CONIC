@@ -7,6 +7,27 @@
 AUTOMAKE_OPTIONS = foreign
 
 ########################################################################
+#                           Common Flags                               #
+########################################################################
+
+LDADD = $(CGLCONICLIB_LIBS)
+DEPENDENCIES = $(CGLCONICLIB_DEPENDENCIES)
+AM_CPPFLAGS = $(CGLCONICLIB_CFLAGS)
+
+
+if IPOPT_IPM_SOLVER
+  AM_CPPFLAGS += -D__OSI_IPOPT__
+endif
+
+if MOSEK_IPM_SOLVER
+  AM_CPPFLAGS += -D__OSI_MOSEK__
+endif
+
+if CPLEX_IPM_SOLVER
+  AM_CPPFLAGS += -D__OSI_CPLEX__
+endif
+
+########################################################################
 #                          Subdirectories                              #
 ########################################################################
 
@@ -25,8 +46,8 @@ SUBDIRS = src
 
 # Here we need include all files that are not mentioned in other Makefiles
 # EXTRA_DIST = examples/cgl1.cpp \
-# 	examples/cgl_data_test.cpp \
-# 	examples/Makefile.in
+#	examples/cgl_data_test.cpp \
+#	examples/Makefile.in
 EXTRA_DIST =
 
 ########################################################################

@@ -43,6 +43,9 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+@IPOPT_IPM_SOLVER_TRUE@am__append_1 = -D__IPOPT__
+@MOSEK_IPM_SOLVER_TRUE@am__append_2 = -D__OSI_MOSEK__
+@CPLEX_IPM_SOLVER_TRUE@am__append_3 = -D__OSI_CPLEX__
 subdir = src/CglConicIPM
 DIST_COMMON = README $(includecoin_HEADERS) $(srcdir)/Makefile.am \
 	$(srcdir)/Makefile.in
@@ -393,12 +396,10 @@ libConicIPM_la_LDFLAGS = $(LT_LDFLAGS)
 
 # Here list all include flags, relative to this "srcdir" directory.  This
 # "cygpath" stuff is necessary to compile with native compilers on Windows.
-AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/..` $(COINUTILS_CFLAGS)\
-	$(OSI_CFLAGS)\
-	$(OSICONIC_CFLAGS)\
-	$(CGL_CFLAGS)\
-	$(OSIMOSEK_CFLAGS)
-
+AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/..` $(COINUTILS_CFLAGS) \
+	$(OSI_CFLAGS) $(OSICONIC_CFLAGS) $(CGL_CFLAGS) \
+	$(OSIMOSEK_CFLAGS) $(am__append_1) $(am__append_2) \
+	$(am__append_3)
 
 # This line is necessary to allow VPATH compilation
 DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I..

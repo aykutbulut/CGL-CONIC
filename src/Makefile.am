@@ -6,8 +6,6 @@
 
 AUTOMAKE_OPTIONS = foreign
 
-# We need to recurse into all Cgl subproject subdirectories
-SUBDIRS = $(CGLCONIC_SUBDIRS)
 
 ########################################################################
 #                           Common Flags                               #
@@ -33,6 +31,9 @@ if CPLEX_IPM_SOLVER
   AM_CPPFLAGS += -D__OSI_CPLEX__
 endif
 
+# We need to recurse into all Cgl subproject subdirectories
+SUBDIRS = $(CGLCONIC_SUBDIRS)
+
 ########################################################################
 #                               libCglConic                            #
 ########################################################################
@@ -43,7 +44,7 @@ lib_LTLIBRARIES = libCglConic.la
 
 # List all source files for this library, including headers
 libCglConic_la_SOURCES = \
-	CglConicConfig.h \
+	CglConicConfig.hpp \
 	CglConicCutGenerator.cpp CglConicCutGenerator.hpp\
 	CglConicParam.cpp CglConicParam.hpp
 
@@ -73,11 +74,12 @@ DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
 # and that therefore should be installed in 'include/coin'
 includecoindir = $(includedir)/coin
 includecoin_HEADERS = \
+	CglConicConfig.hpp \
 	CglConicCutGenerator.hpp \
 	CglConicParam.hpp
 
 install-exec-local:
-	$(install_sh_DATA) config_cglconic.h $(DESTDIR)$(includecoindir)/CglConicConfig.h
+	$(install_sh_DATA) config_cglconic.h $(DESTDIR)$(includecoindir)/CglConicConfig.hpp
 
 uninstall-local:
 	rm -f $(DESTDIR)$(includecoindir)/CglConicConfig.h
