@@ -26,7 +26,7 @@ int main(int argc, char ** argv) {
   conic_solver->readMps(argv[1]);
   // solve initial problem ignoring conic constraints.
   conic_solver->OsiClpSolverInterface::initialSolve();
-  CglConicOA cg;
+  CglConicOA cg(1e-5);
   OsiCuts * cuts;
   int total_num_cuts = 0;
   clock_t start_time = clock();
