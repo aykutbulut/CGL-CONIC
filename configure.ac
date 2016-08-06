@@ -104,8 +104,8 @@ fi
 #############################################################################
 
 # Check which third party solvers are available
-AC_COIN_CHECK_PACKAGE(Cplex, [osicplex], [CglConicLib])
-AC_COIN_CHECK_PACKAGE(Mosek, [osimosek], [CglConicLib])
+AC_COIN_CHECK_PACKAGE(OsiCplex, [osicplex], [CglConicLib])
+AC_COIN_CHECK_PACKAGE(OsiMosek, [osimosek], [CglConicLib])
 
 #############################################################################
 #                      Check for IPM solver                                 #
@@ -150,7 +150,7 @@ if test $found_package = false; then
 fi
 
 AM_CONDITIONAL(IPOPT_IPM_SOLVER,[test $cglconic_ipm_solver = ipopt &&
-test $coin_has_coindepend = yes])
+test $coin_has_osiipopt = yes])
 AM_CONDITIONAL(MOSEK_IPM_SOLVER,[test $cglconic_ipm_solver = mosek &&
 test $coin_has_mosek = yes])
 AM_CONDITIONAL(CPLEX_IPM_SOLVER,[test $cglconic_ipm_solver = cplex &&

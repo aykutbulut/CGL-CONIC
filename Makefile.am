@@ -7,31 +7,18 @@
 AUTOMAKE_OPTIONS = foreign
 
 ########################################################################
+#                          Subdirectories                              #
+########################################################################
+
+SUBDIRS = src
+
+########################################################################
 #                           Common Flags                               #
 ########################################################################
 
 LDADD = $(CGLCONICLIB_LIBS)
 DEPENDENCIES = $(CGLCONICLIB_DEPENDENCIES)
 AM_CPPFLAGS = $(CGLCONICLIB_CFLAGS)
-
-
-if IPOPT_IPM_SOLVER
-  AM_CPPFLAGS += -D__OSI_IPOPT__
-endif
-
-if MOSEK_IPM_SOLVER
-  AM_CPPFLAGS += -D__OSI_MOSEK__
-endif
-
-if CPLEX_IPM_SOLVER
-  AM_CPPFLAGS += -D__OSI_CPLEX__
-endif
-
-########################################################################
-#                          Subdirectories                              #
-########################################################################
-
-SUBDIRS = src
 
 # We don't want to compile the test subdirectory, unless the test target is
 # specified.  But we need to list it as subdirectory to make sure that it is

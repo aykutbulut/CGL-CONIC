@@ -6,31 +6,6 @@
 
 AUTOMAKE_OPTIONS = foreign
 
-
-########################################################################
-#                           Common Flags                               #
-########################################################################
-
-LDADD = $(CGLCONICLIB_LIBS)
-DEPENDENCIES = $(CGLCONICLIB_DEPENDENCIES)
-AM_CPPFLAGS = $(CGLCONICLIB_CFLAGS)
-
-########################################################################
-#                    Define Macros for IPM Solver                      #
-########################################################################
-
-if IPOPT_IPM_SOLVER
-  AM_CPPFLAGS += -D__IPOPT__
-endif
-
-if MOSEK_IPM_SOLVER
-  AM_CPPFLAGS += -D__OSI_MOSEK__
-endif
-
-if CPLEX_IPM_SOLVER
-  AM_CPPFLAGS += -D__OSI_CPLEX__
-endif
-
 # We need to recurse into all Cgl subproject subdirectories
 SUBDIRS = $(CGLCONIC_SUBDIRS)
 
@@ -44,9 +19,11 @@ lib_LTLIBRARIES = libCglConic.la
 
 # List all source files for this library, including headers
 libCglConic_la_SOURCES = \
-	CglConicConfig.hpp \
 	CglConicCutGenerator.cpp CglConicCutGenerator.hpp\
 	CglConicParam.cpp CglConicParam.hpp
+
+# This is for libtool (on Windows)
+libCglConic_la_LDFLAGS = $(LT_LDFLAGS)
 
 # We want to have all the sublibraries from the CglConic subprojects
 # collected into this library
@@ -55,16 +32,30 @@ if DEPENDENCY_LINKING
 libCglConic_la_LIBADD += $(CGLCONICLIB_LIBS)
 endif
 
-# This is for libtool (on Windows)
-libCglConic_la_LDFLAGS = $(LT_LDFLAGS)
-
 # Since automake is not doing this on its own, we need to declare the
 # dependencies to the subdirectory libraries here
 libCglConic_la_DEPENDENCIES = $(CGLCONIC_SUBLIBS)
 
+# Here list all include flags, relative to this "srcdir" directory.  This
+# "cygpath" stuff is necessary to compile with native compilers on Windows.
+AM_CPPFLAGS = $(COINUTILS_CFLAGS)\
+	$(OSI_CFLAGS)\
+	$(OSICLP_CFLAGS)\
+	$(CGL_CFLAGS)\
+	$(OSICONIC_CFLAGS)\
+	$(COLA_CFLAGS)\
+	$(OSIIPOPT_CFLAGS)
+
+if COIN_HAS_OSICPLEX
+AM_CPPFLAGS += $(OSICPLEX_CFLAGS)
+endif
+
+if COIN_HAS_OSIMOSEK
+AM_CPPFLAGS += $(OSIMOSEK_CFLAGS)
+endif
 
 # This line is necessary to allow VPATH compilation
-DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
+# DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
 
 ########################################################################
 #                Headers that need to be installed                     #
@@ -74,7 +65,6 @@ DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
 # and that therefore should be installed in 'include/coin'
 includecoindir = $(includedir)/coin
 includecoin_HEADERS = \
-	CglConicConfig.hpp \
 	CglConicCutGenerator.hpp \
 	CglConicParam.hpp
 

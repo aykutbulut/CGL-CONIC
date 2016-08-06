@@ -27,20 +27,30 @@ libConicIPM_la_LDFLAGS = $(LT_LDFLAGS)
 # "cygpath" stuff is necessary to compile with native compilers on Windows.
 AM_CPPFLAGS = -I`$(CYGPATH_W) $(srcdir)/..` $(COINUTILS_CFLAGS)\
 	$(OSI_CFLAGS)\
-	$(OSICONIC_CFLAGS)\
+	$(OSICLP_CFLAGS)\
 	$(CGL_CFLAGS)\
-	$(OSIMOSEK_CFLAGS)
+	$(OSICONIC_CFLAGS)\
+	$(COLA_CFLAGS)\
+	$(OSIIPOPT_CFLAGS)
+
+if COIN_HAS_OSIMOSEK
+AM_CPPFLAGS += $(OSIMOSEK_CFLAGS)
+endif
+
+if COIN_HAS_OSICPLEX
+AM_CPPFLAGS += $(OSICPLEX_CFLAGS)
+endif
 
 if IPOPT_IPM_SOLVER
-  AM_CPPFLAGS += -D__IPOPT__
+AM_CPPFLAGS += -D__OSI_IPOPT__
 endif
 
 if MOSEK_IPM_SOLVER
-  AM_CPPFLAGS += -D__OSI_MOSEK__
+AM_CPPFLAGS += -D__OSI_MOSEK__
 endif
 
 if CPLEX_IPM_SOLVER
-  AM_CPPFLAGS += -D__OSI_CPLEX__
+AM_CPPFLAGS += -D__OSI_CPLEX__
 endif
 
 # This line is necessary to allow VPATH compilation
