@@ -10,7 +10,7 @@
 
 AC_PREREQ(2.59)
 
-AC_INIT([CglConic],[0.1],[https://github.com/aykutbulut/CGL-CONIC/issues/new])
+AC_INIT([CglConic],[0.2],[https://github.com/aykutbulut/CGL-CONIC/issues/new])
 
 AC_COPYRIGHT([
 /*===========================================================================*/
