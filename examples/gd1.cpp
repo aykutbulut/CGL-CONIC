@@ -23,10 +23,26 @@
 #include <OsiCuts.hpp>
 // OSICONIC header
 #include <OsiConicSolverInterface.hpp>
-#include <OsiMosekSolverInterface.hpp>
 #include <OsiConicCuts.hpp>
 // COLA headers
 #include <ColaModel.hpp>
+
+// get IPM solver
+#if defined(__OSI_MOSEK__)
+  // use mosek as IPM solver
+  #include <OsiMosekSolverInterface.hpp>
+  //#define IPM_SOLVER OsiMosekSolverInterface
+  typedef OsiMosekSolverInterface IPM_SOLVER;
+#elif defined(__OSI_CPLEX__)
+  // use cplex as IPM solver
+  #include <OsiCplexSolverInterface.hpp>
+  typedef OsiCplexSolverInterface IPM_SOLVER;
+#elif defined(__OSI_IPOPT__)
+  // use ipopt
+  #include <OsiIpoptSolverInterface.hpp>
+  typedef OsiIpoptSolverInterface IPM_SOLVER;
+#endif
+
 // CGL headers
 // #include "CglKnapsackCover.hpp"
 // #include "CglSimpleRounding.hpp"
@@ -48,7 +64,7 @@ int main(int argc, const char *argv[]) {
   try {
     // Instantiate a specific solver interface
     //OsiConicSolverInterface * si = new ColaModel();
-    OsiConicSolverInterface * si = new OsiMosekSolverInterface();
+    OsiConicSolverInterface * si = new IPM_SOLVER();
     // Read file describing problem
     si->readMps(mpsFileName.c_str(),"mps");
     // Solve continuous problem

@@ -152,9 +152,9 @@ fi
 AM_CONDITIONAL(IPOPT_IPM_SOLVER,[test $cglconic_ipm_solver = ipopt &&
 test $coin_has_osiipopt = yes])
 AM_CONDITIONAL(MOSEK_IPM_SOLVER,[test $cglconic_ipm_solver = mosek &&
-test $coin_has_mosek = yes])
+test $coin_has_osimosek = yes])
 AM_CONDITIONAL(CPLEX_IPM_SOLVER,[test $cglconic_ipm_solver = cplex &&
-test $coin_has_cplex = yes])
+test $coin_has_osicplex = yes])
 
 # Check thirdparty libraries
 AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])

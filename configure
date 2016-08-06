@@ -25462,7 +25462,7 @@ fi
 
 
 if test $cglconic_ipm_solver = mosek &&
-test $coin_has_mosek = yes; then
+test $coin_has_osimosek = yes; then
   MOSEK_IPM_SOLVER_TRUE=
   MOSEK_IPM_SOLVER_FALSE='#'
 else
@@ -25473,7 +25473,7 @@ fi
 
 
 if test $cglconic_ipm_solver = cplex &&
-test $coin_has_cplex = yes; then
+test $coin_has_osicplex = yes; then
   CPLEX_IPM_SOLVER_TRUE=
   CPLEX_IPM_SOLVER_FALSE='#'
 else

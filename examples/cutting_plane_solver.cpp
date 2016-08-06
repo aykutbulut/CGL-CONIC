@@ -17,7 +17,6 @@
 
 #include <CglConicOA.hpp>
 #include <ColaModel.hpp>
-#include <OsiMskSolverInterface.hpp>
 
 int main(int argc, char ** argv) {
   // create conic solver interface
