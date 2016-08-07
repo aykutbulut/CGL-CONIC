@@ -158,8 +158,8 @@ test $coin_has_osicplex = yes])
 
 # Check thirdparty libraries
 AC_COIN_CHECK_PACKAGE(Sample, [coindatasample])
-AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
-AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
+#AC_COIN_CHECK_PACKAGE_BLAS(CglConicLib)
+#AC_COIN_CHECK_PACKAGE_LAPACK(CglConicLib)
 
 #############################################################################
 #                       Solvers for unittesting                             #
