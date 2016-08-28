@@ -81,25 +81,25 @@ void CglConicIPMint::setParam(CglConicIPMintParam const & param) {
 // generate outer approximating hyperplanes for conic constraints
 // todo(aykut): approximates Lorentz cones only for now.
 void CglConicIPMint::generateCuts(OsiConicSolverInterface const & si,
-			       OsiCuts & cuts,
-			       const CglTreeInfo info) {
+                               OsiCuts & cuts,
+                               const CglTreeInfo info) {
   // this function does nothing.
 }
 
 // generate cuts for a linear solver interface
 void CglConicIPMint::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-		  int num_cones, OsiLorentzConeType const * cone_type,
-			       int const * cone_size, int const * const * members,
-			       int num_points) {
+                  int num_cones, OsiLorentzConeType const * cone_type,
+                               int const * cone_size, int const * const * members,
+                               int num_points) {
   method3(si, cuts, num_cones, cone_type, cone_size, members, num_points);
 }
 
 // optimize given SOCO. Find points around optimal solution and add cuts
 // on these points.
 void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
-			  int num_cones, OsiLorentzConeType const * cone_type,
-			  int const * cone_size, int const * const * members,
-			  int num_points) {
+                          int num_cones, OsiLorentzConeType const * cone_type,
+                          int const * cone_size, int const * const * members,
+                          int num_points) {
   // si solution
   double const * sol = si.getColSolution();
   // unboundedness direction, if si is unbounded.
@@ -110,7 +110,7 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
     if (si.isProvenPrimalInfeasible()) {
       // Both LP primal and dual is infeasible, conic problem is infeasible
       std::cerr << "CglConic: Conic problem is infeasible."
-		<< std::endl;
+                << std::endl;
     }
     // get one ray
     // todo(aykut) for now we get only one ray
@@ -121,10 +121,10 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
     }
     else {
       std::cerr << "CglConic: Warning! "
-		<< "LP relaxation is unbounded but solver did not return a "
-	"direction of unboundedness." << std::endl
-		<< "CglConic: Trying to generate supports using objective "
-	"function coefficients..." << std::endl;
+                << "LP relaxation is unbounded but solver did not return a "
+        "direction of unboundedness." << std::endl
+                << "CglConic: Trying to generate supports using objective "
+        "function coefficients..." << std::endl;
       vec = si.getObjCoefficients();
     }
     int num_cols = si.getNumCols();
@@ -133,7 +133,7 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
     // delete all rays not just first one.
     if (!rays.empty()) {
       for(int i=0; i<rays.size(); ++i)
-	delete[] rays[i];
+        delete[] rays[i];
       rays.clear();
     }
   }
@@ -150,11 +150,11 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
     }
     if (cone_type[i]==OSI_QUAD) {
       activity = par_sol[0] - sqrt(std::inner_product(par_sol+1,
-				par_sol+cone_size[i], par_sol+1, 0.0));
+                                par_sol+cone_size[i], par_sol+1, 0.0));
     }
     else if (cone_type[i]==OSI_RQUAD) {
       activity = 2*par_sol[0]*par_sol[1] - std::inner_product(par_sol+2,
-				par_sol+cone_size[i], par_sol+2, 0.0);
+                                par_sol+cone_size[i], par_sol+2, 0.0);
     }
     else {
       std::cerr << "Unknown cone." << std::endl;
@@ -204,9 +204,9 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
     int s = 0;
     for (int i=0; i<num_cols; ++i) {
       if (obj[i]!=0.0) {
-	ind[s] = i;
-	val[s] = obj[i];
-	s++;
+        ind[s] = i;
+        val[s] = obj[i];
+        s++;
       }
     }
     OsiRowCut * rc = new OsiRowCut();
@@ -221,6 +221,7 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
     return;
   }
   else if (!(solver_->isProvenOptimal())) {
+    // todo(aykut) these should be printed through message handler.
     std::cerr << "Cut problem could not be solved!" << std::endl;
     std::cerr << "No cuts generated!" << std::endl;
     return;
@@ -237,11 +238,11 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
   }
   // create random points around sol, on the cone
   create_rand_points(num_cols, ipm_sol, num_cones, cone_type, cone_size,
-		     members, points, num_points);
+                     members, points, num_points);
   // add cuts from the points that are on the cones.
   for (int j=0; j<num_points; ++j) {
     add_cuts2(num_cols, points[j], num_cones, cone_type, cone_size,
-	     members, cuts);
+             members, cuts);
   }
   // add cuts that actually cuts the point.
   // add cut if it actually cuts the lp solution
@@ -284,9 +285,9 @@ void CglConicIPMint::method1(OsiSolverInterface const & si, OsiCuts & cuts,
 // where xbar is approximating LP solution and X is feasible region of SOCO.
 // Then add cut on the optimal solution of this problem.
 void CglConicIPMint::method2(OsiSolverInterface const & si, OsiCuts & cuts,
-			  int num_cones, OsiLorentzConeType const * cone_type,
-			  int const * cone_size, int const * const * members,
-			  int num_points) {
+                          int num_cones, OsiLorentzConeType const * cone_type,
+                          int const * cone_size, int const * const * members,
+                          int num_points) {
   // free solver
   if (solver_) {
     delete solver_;
@@ -307,11 +308,11 @@ void CglConicIPMint::method2(OsiSolverInterface const & si, OsiCuts & cuts,
     }
     if (cone_type[i]==OSI_QUAD) {
       activity = par_sol[0] - sqrt(std::inner_product(par_sol+1,
-				par_sol+cone_size[i], par_sol+1, 0.0));
+                                par_sol+cone_size[i], par_sol+1, 0.0));
     }
     else if (cone_type[i]==OSI_RQUAD) {
       activity = 2*par_sol[0]*par_sol[1] - std::inner_product(par_sol+2,
-				par_sol+cone_size[i], par_sol+2, 0.0);
+                                par_sol+cone_size[i], par_sol+2, 0.0);
     }
     else {
       std::cerr << "Unknown cone." << std::endl;
@@ -416,11 +417,11 @@ void CglConicIPMint::method2(OsiSolverInterface const & si, OsiCuts & cuts,
   }
   // create random points around sol, on the cone
   create_rand_points(num_cols, proj_sol, num_cones, cone_type, cone_size,
-		     members, points, num_points);
+                     members, points, num_points);
   // add cuts from the points that are on the cones.
   for (int j=0; j<num_points; ++j) {
     add_cuts2(num_cols, points[j], num_cones, cone_type, cone_size,
-	     members, cuts);
+             members, cuts);
   }
   // free memory allocated to points
   for (int i=0; i<num_points; ++i) {
@@ -431,9 +432,9 @@ void CglConicIPMint::method2(OsiSolverInterface const & si, OsiCuts & cuts,
 
 
 void CglConicIPMint::method3(OsiSolverInterface const & si, OsiCuts & cuts,
-	     int num_cones, OsiLorentzConeType const * cone_type,
-	     int const * cone_size, int const * const * members,
-	     int num_points) {
+             int num_cones, OsiLorentzConeType const * cone_type,
+             int const * cone_size, int const * const * members,
+             int num_points) {
   // si solution
   double const * sol = si.getColSolution();
   // unboundedness direction, if si is unbounded.
@@ -444,7 +445,7 @@ void CglConicIPMint::method3(OsiSolverInterface const & si, OsiCuts & cuts,
     if (si.isProvenPrimalInfeasible()) {
       // Both LP primal and dual is infeasible, conic problem is infeasible
       std::cerr << "CglConic: Conic problem is infeasible."
-		<< std::endl;
+                << std::endl;
     }
     // get one ray
     // todo(aykut) for now we get only one ray
@@ -455,10 +456,10 @@ void CglConicIPMint::method3(OsiSolverInterface const & si, OsiCuts & cuts,
     }
     else {
       std::cerr << "CglConic: Warning! "
-		<< "LP relaxation is unbounded but solver did not return a "
-	"direction of unboundedness." << std::endl
-		<< "CglConic: Trying to generate supports using objective "
-	"function coefficients..." << std::endl;
+                << "LP relaxation is unbounded but solver did not return a "
+        "direction of unboundedness." << std::endl
+                << "CglConic: Trying to generate supports using objective "
+        "function coefficients..." << std::endl;
       vec = si.getObjCoefficients();
     }
     int num_cols = si.getNumCols();
@@ -467,7 +468,7 @@ void CglConicIPMint::method3(OsiSolverInterface const & si, OsiCuts & cuts,
     // delete all rays not just first one.
     if (!rays.empty()) {
       for(int i=0; i<rays.size(); ++i)
-	delete[] rays[i];
+        delete[] rays[i];
       rays.clear();
     }
   }
@@ -484,11 +485,11 @@ void CglConicIPMint::method3(OsiSolverInterface const & si, OsiCuts & cuts,
     }
     if (cone_type[i]==OSI_QUAD) {
       activity = par_sol[0] - sqrt(std::inner_product(par_sol+1,
-				par_sol+cone_size[i], par_sol+1, 0.0));
+                                par_sol+cone_size[i], par_sol+1, 0.0));
     }
     else if (cone_type[i]==OSI_RQUAD) {
       activity = 2*par_sol[0]*par_sol[1] - std::inner_product(par_sol+2,
-				par_sol+cone_size[i], par_sol+2, 0.0);
+                                par_sol+cone_size[i], par_sol+2, 0.0);
     }
     else {
       std::cerr << "Unknown cone." << std::endl;
@@ -562,11 +563,11 @@ void CglConicIPMint::method3(OsiSolverInterface const & si, OsiCuts & cuts,
   }
   // create random points around sol, on the cone
   create_rand_points(num_cols, ipm_sol, num_cones, cone_type, cone_size,
-		     members, points, num_points);
+                     members, points, num_points);
   // add cuts from the points that are on the cones.
   for (int j=0; j<num_points; ++j) {
     add_cuts2(num_cols, points[j], num_cones, cone_type, cone_size,
-	     members, cuts);
+             members, cuts);
   }
   // add cuts that actually cuts the point.
   // add cut if it actually cuts the lp solution
@@ -601,9 +602,9 @@ void CglConicIPMint::method3(OsiSolverInterface const & si, OsiCuts & cuts,
 // add cuts from the point on the cone
 // we know that points are on the cone.
 void CglConicIPMint::add_cuts2(int num_cols, double const * point, int num_cones,
-			    OsiLorentzConeType const * cone_type,
-			    int const * cone_size,
-			    int const * const * members, OsiCuts & cuts) {
+                            OsiLorentzConeType const * cone_type,
+                            int const * cone_size,
+                            int const * const * members, OsiCuts & cuts) {
   double * par_point;
   int start;
   for (int i=0; i<num_cones; ++i) {
@@ -674,28 +675,28 @@ void CglConicIPMint::add_cuts2(int num_cols, double const * point, int num_cones
 
 
 void CglConicIPMint::create_rand_points(int num_cols, double const * sol,
-				     int num_cones,
-				     OsiLorentzConeType const * cone_type,
-				     int const * cone_size,
-				     int const * const * members,
-				     double ** points,
-				     int num_points) const {
+                                     int num_cones,
+                                     OsiLorentzConeType const * cone_type,
+                                     int const * cone_size,
+                                     int const * const * members,
+                                     double ** points,
+                                     int num_points) const {
   std::copy(sol, sol+num_cols, points[0]);
   for (int i=1; i<num_points; ++i) {
     // generate a random point around sol
     create_rand_point2(num_cols, sol, num_cones, cone_type, cone_size,
-		       members, points[i]);
+                       members, points[i]);
   }
 }
 
 
 // create a random point around par_sol that is on the tight cones.
 void CglConicIPMint::create_rand_point2(int num_cols, double const * sol,
-				     int num_cones,
-				     OsiLorentzConeType const * cone_type,
-				     int const * cone_size,
-				     int const * const * members,
-				     double * point) const {
+                                     int num_cones,
+                                     OsiLorentzConeType const * cone_type,
+                                     int const * cone_size,
+                                     int const * const * members,
+                                     double * point) const {
   double * par_sol = 0;
   double * par_point = 0;
   // check whether cone is tight.
@@ -708,7 +709,7 @@ void CglConicIPMint::create_rand_point2(int num_cols, double const * sol,
     // generate point on a tight cone
     par_point = new double[cone_size[i]];
     create_rand_point3(cone_size[i], par_sol, cone_type[i], members[i],
-		       par_point);
+                       par_point);
     // store par_point to points[i]
     for (int j=0; j<cone_size[i]; ++j) {
       point[members[i][j]] = par_point[j];
@@ -719,9 +720,9 @@ void CglConicIPMint::create_rand_point2(int num_cols, double const * sol,
 }
 
 void CglConicIPMint::create_rand_point3(int cone_size, double const * par_sol,
-				     OsiLorentzConeType cone_type,
-				     int const * members,
-				     double * par_point) const {
+                                     OsiLorentzConeType cone_type,
+                                     int const * members,
+                                     double * par_point) const {
   double eps = 1e-1;
   int rand_sign;
   double rand_number;
@@ -748,7 +749,7 @@ void CglConicIPMint::create_rand_point3(int cone_size, double const * par_sol,
     }
   }
   sum_sq = std::inner_product(par_point+start, par_point+cone_size,
-			      par_point+start, 0.0);
+                              par_point+start, 0.0);
   if (cone_type==OSI_QUAD) {
     par_point[0] = sqrt(sum_sq);
   }
@@ -782,9 +783,9 @@ void CglConicIPMint::create_rand_point3(int cone_size, double const * par_sol,
 }
 
 void CglConicIPMint::add_cuts(int size, double const * sol, int num_cones,
-			   OsiLorentzConeType const * cone_type,
-			   int const * cone_size, int const * const * members,
-			   OsiCuts & cuts) const {
+                           OsiLorentzConeType const * cone_type,
+                           int const * cone_size, int const * const * members,
+                           OsiCuts & cuts) const {
   for (int i=0; i<num_cones; ++i) {
     OsiRowCut * rc = new OsiRowCut();
     double feas = generate_support(cone_size[i], cone_type[i], members[i], sol, rc);
@@ -798,25 +799,25 @@ void CglConicIPMint::add_cuts(int size, double const * sol, int num_cones,
 }
 
 int CglConicIPMint::generate_support(int size,
-				 OsiLorentzConeType type,
-				 int const * members,
-				 double const * sol,
-				 OsiRowCut * rc) const {
+                                 OsiLorentzConeType type,
+                                 int const * members,
+                                 double const * sol,
+                                 OsiRowCut * rc) const {
   int feas;
   if (type==OSI_QUAD) {
     feas = generate_support_lorentz(size, members, sol, rc);
   }
   else {
     feas = generate_support_rotated_lorentz(size,
-					    members, sol, rc);
+                                            members, sol, rc);
   }
   return feas;
 }
 
 int CglConicIPMint::generate_support_lorentz(int size,
-				 int const * members,
-				 double const * sol,
-				 OsiRowCut * rc) const {
+                                 int const * members,
+                                 double const * sol,
+                                 OsiRowCut * rc) const {
   int feas;
   double * par_point = new double[size];
   for(int j=0; j<size; ++j) {
@@ -863,9 +864,9 @@ int CglConicIPMint::generate_support_lorentz(int size,
 }
 
 int CglConicIPMint::generate_support_rotated_lorentz(int size,
-						 int const * members,
-						 double const * sol,
-						 OsiRowCut * rc) const {
+                                                 int const * members,
+                                                 double const * sol,
+                                                 OsiRowCut * rc) const {
   int feas;
   double activity;
   double * par_point = new double[size];
