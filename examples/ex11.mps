@@ -1,14 +1,15 @@
 NAME
 * Written by MOSEK version 7.1.0.29
+* Example from Goez's dissertation, section 5.2.
 OBJSENSE
     MIN
 ROWS
  N  OBJ
- E  C1      
- E  C2      
- E  C3      
- E  C4      
- E  C5      
+ E  C1
+ E  C2
+ E  C3
+ E  C4
+ E  C5
 COLUMNS
     X1        OBJ       3e+0
     X1        C1        9e+0
@@ -53,24 +54,24 @@ RHS
     rhs       C5        1e+0
 RANGES
 BOUNDS
- FR bound     X1      
+ FR bound     X1
  LI bound     X2        0
- MI bound     X2      
- FR bound     X3      
- FR bound     X4      
- FR bound     X5      
- FR bound     X6      
+ MI bound     X2
+ FR bound     X3
+ FR bound     X4
+ FR bound     X5
+ FR bound     X6
  LI bound     X7        0
- MI bound     X7      
- FR bound     X8      
+ MI bound     X7
+ FR bound     X8
 CSECTION      K1        0              QUAD
-    X1      
-    X2      
-    X3      
-    X4      
+    X1
+    X2
+    X3
+    X4
 CSECTION      K2        0              QUAD
-    X5      
-    X6      
-    X7      
-    X8      
+    X5
+    X6
+    X7
+    X8
 ENDATA
