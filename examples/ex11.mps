@@ -1,5 +1,4 @@
 NAME
-* Written by MOSEK version 7.1.0.29
 * Example from Goez's dissertation, section 5.2.
 OBJSENSE
     MIN
@@ -55,14 +54,12 @@ RHS
 RANGES
 BOUNDS
  FR bound     X1
- LI bound     X2        0
- MI bound     X2
+ FR bound     X2
  FR bound     X3
  FR bound     X4
  FR bound     X5
  FR bound     X6
- LI bound     X7        0
- MI bound     X7
+ FR bound     X7
  FR bound     X8
 CSECTION      K1        0              QUAD
     X1
