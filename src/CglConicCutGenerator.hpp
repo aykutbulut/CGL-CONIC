@@ -39,27 +39,27 @@ public:
   virtual void refreshSolver(OsiConicSolverInterface * si) {}
   // generate cuts
   virtual void generateCuts(const OsiConicSolverInterface & si,
-			    OsiConicCuts & cs,
-			    const CglTreeInfo info = CglTreeInfo());
+                            OsiConicCuts & cs,
+                            const CglTreeInfo info = CglTreeInfo());
   // generate linear/ordinary cuts.
   virtual void generateCuts(const OsiConicSolverInterface & si,
-			    OsiCuts & cs,
-			    const CglTreeInfo info = CglTreeInfo());
+                            OsiCuts & cs,
+                            const CglTreeInfo info = CglTreeInfo());
 
   // generate linear cuts for a solver interface with conic constraints
   // given explicitly
   virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-			    int num_cones,
-			    OsiLorentzConeType const * cone_type,
-			    int const * cone_size,
-			    int const * const * members) {}
+                            int num_cones,
+                            OsiLorentzConeType const * cone_type,
+                            int const * cone_size,
+                            int const * const * members) {}
   // generate linear cuts for a solver interface with conic constraints
   // given explicitly
   virtual void generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
-			    int num_cones,
-			    OsiLorentzConeType const * cone_type,
-			    int const * cone_size,
-			    int const * const * members, int num_points) {}
+                            int num_cones,
+                            OsiLorentzConeType const * cone_type,
+                            int const * cone_size,
+                            int const * const * members, int num_points) {}
   int aggressiveness() const;
   void setAggressiveness(int value);
   // set whether can do global cuts
@@ -99,8 +99,8 @@ class Disjunction {
 public:
   // defualt constructor
   Disjunction(int size,
-	      double const * c1, double c10,
-	      double const * c2, double c20): size_(size) {
+              double const * c1, double c10,
+              double const * c2, double c20): size_(size) {
     c1_ = new double[size];
     std::copy (c1, c1+size, c1_);
     c2_ = new double[size];
@@ -113,14 +113,10 @@ public:
     // save size_
     size_ = other.size();
     // copy c1_
-    if (c1_)
-      delete[] c1_;
     c1_ = new double[size_];
     double const * other_c1 = other.get_c1();
     std::copy(other_c1, other_c1+size_, c1_);
     // copy c2_
-    if (c2_)
-      delete[] c2_;
     c2_ = new double[size_];
     double const * other_c2 = other.get_c2();
     std::copy(other_c2, other_c2+size_, c2_);
@@ -128,6 +124,7 @@ public:
     c10_ = other.get_c10();
     c20_ = other.get_c20();
   }
+
   // copy assignment operator
   Disjunction & operator=(Disjunction const & rhs) {
     // save size_
