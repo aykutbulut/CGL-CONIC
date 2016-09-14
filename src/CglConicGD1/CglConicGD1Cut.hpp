@@ -1,6 +1,9 @@
+#ifndef CglConicGD1Cut_H
+#define CglConicGD1Cut_H
+
 #include <OsiConicSolverInterface.hpp>
 #include "CglConicCutGenerator.hpp"
-
+#include "CglConicGD1Help.hpp"
 /*!
   Class to represent a conic cut of Belotti et. al. introduced in [1] and [2].
   Typical use of this class:
@@ -39,7 +42,7 @@ class CglConicGD1Cut {
   OsiLorentzConeType lctype_;
   /// Size of cut generating cone.
   int csize_;
-  // Members of cut generating cone.
+  /// Members of cut generating cone.
   int * cmembers_;
   /// cone_members_[i] is 1 if column i is in the cone, 0 otherwise.
   /// length of this array is larger than csize_ when multiple cones
@@ -143,11 +146,25 @@ class CglConicGD1Cut {
   // compute cone at tau
   //void coneAtTau();
   // solve quadratic formula for its largest roots
-public:
+  void generate_cut_dual();
+ public:
   CglConicGD1Cut();
   CglConicGD1Cut(OsiConicSolverInterface const * solver,
                  int num_rows, int * rows,
                  int cut_cone, int dis_var);
+  /** Constructor that takes input in quadric form. (Q,q,rho) denotes the
+      quadric. (a,alpha) and (b,beta) denotes the disjunction a^Tw<=alpha,
+      b^Tw>=beta. H's columns are the basis for the null space of A
+      (coefficient matrix). H given here is only the related portion
+      corresponding to the underlying cone in the primal
+      space. num_cols/num_rows is number of cols/rows of input H.
+   */
+  CglConicGD1Cut(double const * matQ, double const * vecq, double rho,
+                 int num_rows, int num_cols, double const * matH,
+                 double const * x0,
+                 int const * cmembers,
+                 int dis_var,
+                 Disjunction const & disjunction);
   bool valid() const;
   // number of rows of the linear part of the cut
   // ie num of rows of the new A matrix.
@@ -172,3 +189,5 @@ public:
   int linear_cut_size() const;
   ~CglConicGD1Cut();
 };
+
+#endif

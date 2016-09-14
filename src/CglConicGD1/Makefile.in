@@ -57,8 +57,8 @@ CONFIG_HEADER = $(top_builddir)/src/config.h \
 CONFIG_CLEAN_FILES =
 LTLIBRARIES = $(noinst_LTLIBRARIES)
 libCglConicGD1_la_LIBADD =
-am_libCglConicGD1_la_OBJECTS = CglConicGD1.lo CglConicGD1Cut.lo \
-	CglConicGD1Param.lo
+am_libCglConicGD1_la_OBJECTS = CglConicGD1.lo CglConicGD1Help.lo \
+	CglConicGD1Cut.lo CglConicGD1Param.lo
 libCglConicGD1_la_OBJECTS = $(am_libCglConicGD1_la_OBJECTS)
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -366,6 +366,8 @@ noinst_LTLIBRARIES = libCglConicGD1.la
 # List all source files for this library, including headers
 libCglConicGD1_la_SOURCES = CglConicGD1.cpp\
 		CglConicGD1.hpp\
+		CglConicGD1Help.hpp\
+		CglConicGD1Help.cpp\
 		CglConicGD1Cut.cpp\
 		CglConicGD1Cut.hpp\
 		CglConicGD1Param.cpp\
@@ -394,6 +396,7 @@ DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I..
 # and that therefore should be installed in 'include/coin'
 includecoindir = $(includedir)/coin
 includecoin_HEADERS = CglConicGD1.hpp\
+		CglConicGD1Help.hpp\
 		CglConicGD1Cut.hpp\
 		CglConicGD1Param.hpp
 
@@ -450,6 +453,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CglConicGD1.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CglConicGD1Cut.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CglConicGD1Help.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/CglConicGD1Param.Plo@am__quote@
 
 .cpp.o:

@@ -17,6 +17,8 @@ noinst_LTLIBRARIES = libCglConicGD1.la
 # List all source files for this library, including headers
 libCglConicGD1_la_SOURCES = CglConicGD1.cpp\
 		CglConicGD1.hpp\
+		CglConicGD1Help.hpp\
+		CglConicGD1Help.cpp\
 		CglConicGD1Cut.cpp\
 		CglConicGD1Cut.hpp\
 		CglConicGD1Param.cpp\
@@ -43,5 +45,6 @@ DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)` -I..
 # and that therefore should be installed in 'include/coin'
 includecoindir = $(includedir)/coin
 includecoin_HEADERS = CglConicGD1.hpp\
+		CglConicGD1Help.hpp\
 		CglConicGD1Cut.hpp\
 		CglConicGD1Param.hpp

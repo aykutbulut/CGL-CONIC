@@ -215,6 +215,7 @@ cd $curr_dir
 # In case this is a VPATH configuration we need to make sure that the
 # input files for the examples are available in the VPATH directory.
 AC_COIN_VPATH_LINK(examples/ex1.mps)
+AC_COIN_VPATH_LINK(examples/ex11.mps)
 
 #############################################################################
 #                  Check for doxygen                                        #

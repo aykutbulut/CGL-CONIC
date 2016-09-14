@@ -17,6 +17,7 @@
 #include "CglConicGD1Param.hpp"
 #include "CglConicCutGenerator.hpp"
 #include "CglConicGD1Cut.hpp"
+#include "CglConicGD1Help.hpp"
 // STDLIB headers
 #include <string>
 
@@ -40,6 +41,9 @@ class CglConicGD1: public CglConicCutGenerator {
   void add_cone_form_cut(OsiConicSolverInterface * solver,
                          CglConicGD1Cut * cut);
   void print_cut(CglConicGD1Cut * cut) const;
+  // return true if all constraints are equality.
+  bool constraint_check(OsiConicSolverInterface const & solver) const;
+  void preprocess(OsiConicSolverInterface & solver, OsiConicSolverInterface const & si) const;
 public:
   // default constructor
   CglConicGD1(OsiConicSolverInterface * solver);
@@ -65,6 +69,8 @@ public:
   virtual std::string generateCpp( FILE * fp);
   // generate and add cuts, return conic interface
   OsiConicSolverInterface * generateAndAddCuts(OsiConicSolverInterface const & si,
+                                    const CglTreeInfo info = CglTreeInfo());
+  OsiConicSolverInterface * generateAndAddCuts2(OsiConicSolverInterface const & si,
                                     const CglTreeInfo info = CglTreeInfo());
   int getNumCutsAdded() const;
 };
