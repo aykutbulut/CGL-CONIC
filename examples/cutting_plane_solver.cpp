@@ -39,6 +39,7 @@ int main(int argc, char ** argv) {
     // add cuts to the problem
     int num_cuts = cuts->sizeRowCuts();
     if (num_cuts==0) {
+      delete cuts;
       break;
     }
     else {
