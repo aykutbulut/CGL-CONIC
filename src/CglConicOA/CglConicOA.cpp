@@ -66,8 +66,41 @@ void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
                               int num_cones, OsiLorentzConeType const * cone_type,
                               int const * cone_size, int const * const * members,
                               int num_points) {
+
   int n = si.getNumCols();
-  double const * sol = si.getColSolution();
+  double * sol = new double[n]();
+  // if solver status is optimal
+  if (si.isProvenOptimal()) {
+    std::copy(si.getColSolution(), si.getColSolution()+n, sol);
+  }
+  else if (si.isProvenDualInfeasible()) {
+      // get one ray
+      // todo(aykut) for now we get only one ray
+      std::vector<double*> rays = si.getPrimalRays(1);
+      if (!rays.empty() and rays[0]!=0) {
+        std::copy(rays[0], rays[0]+n, sol);
+      }
+      else {
+        std::cerr << "Cgl: Warning! "
+                  << "LP is unbounded but solver did not return a "
+          "direction of unboundedness." << std::endl
+                  << "Cgl: Trying to generate supports using objective "
+          "function coefficients..." << std::endl;
+        std::copy(si.getObjCoefficients(), si.getObjCoefficients()+n, sol);
+      }
+      // delete all rays not just first one.
+      if (!rays.empty()) {
+        for(int i=0; i<rays.size(); ++i)
+          delete[] rays[i];
+        rays.clear();
+      }
+  }
+  else {
+    std::cerr << "Other solver status are not allowed." << std::endl
+              << "This should not happen!" << std::endl;
+    throw std::exception();
+  }
+  // if solve status is dual infeasible (unbounded problem)
   double ** point = new double*[num_points];
   for (int k=0; k<num_points; ++k) {
     point[k] = new double[n];
@@ -99,6 +132,7 @@ void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
   for (int k=0; k<num_points; ++k) {
     delete[] point[k];
   }
+  delete[] sol;
   delete[] point;
   delete[] feasible;
 }
