@@ -548,6 +548,8 @@ void CglConicIPM::method3(OsiSolverInterface const & si, OsiCuts & cuts,
     }
   }
   solver_->loadProblem(*matrix, new_collb, new_colub, obj, rowlb, rowub);
+  delete[] new_collb;
+  delete[] new_colub;
   // add conic constraints
   for (int i=0; i<num_cones; ++i) {
     solver_->addConicConstraint(cone_type[i], cone_size[i], members[i]);
