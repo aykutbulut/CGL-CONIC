@@ -38,13 +38,14 @@ libCglConic_la_DEPENDENCIES = $(CGLCONIC_SUBLIBS)
 
 # Here list all include flags, relative to this "srcdir" directory.  This
 # "cygpath" stuff is necessary to compile with native compilers on Windows.
-AM_CPPFLAGS = $(COINUTILS_CFLAGS)\
-	$(OSI_CFLAGS)\
-	$(OSICLP_CFLAGS)\
-	$(CGL_CFLAGS)\
-	$(OSICONIC_CFLAGS)\
-	$(COLA_CFLAGS)\
-	$(OSIIPOPT_CFLAGS)
+AM_CPPFLAGS = $(CGLCONICLIB_CFLAGS)
+#	$(COINUTILS_CFLAGS)\
+#	$(OSI_CFLAGS)\
+#	$(OSICLP_CFLAGS)\
+#	$(CGL_CFLAGS)\
+#	$(OSICONIC_CFLAGS)\
+#	$(COLA_CFLAGS)\
+#	$(OSIIPOPT_CFLAGS)
 
 if COIN_HAS_OSICPLEX
 AM_CPPFLAGS += $(OSICPLEX_CFLAGS)
