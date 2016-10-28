@@ -44,6 +44,13 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 @DEPENDENCY_LINKING_TRUE@am__append_1 = $(CGLCONICLIB_LIBS)
+#	$(COINUTILS_CFLAGS)\
+#	$(OSI_CFLAGS)\
+#	$(OSICLP_CFLAGS)\
+#	$(CGL_CFLAGS)\
+#	$(OSICONIC_CFLAGS)\
+#	$(COLA_CFLAGS)\
+#	$(OSIIPOPT_CFLAGS)
 @COIN_HAS_OSICPLEX_TRUE@am__append_2 = $(OSICPLEX_CFLAGS)
 @COIN_HAS_OSIMOSEK_TRUE@am__append_3 = $(OSIMOSEK_CFLAGS)
 subdir = src
@@ -397,9 +404,7 @@ libCglConic_la_DEPENDENCIES = $(CGLCONIC_SUBLIBS)
 
 # Here list all include flags, relative to this "srcdir" directory.  This
 # "cygpath" stuff is necessary to compile with native compilers on Windows.
-AM_CPPFLAGS = $(COINUTILS_CFLAGS) $(OSI_CFLAGS) $(OSICLP_CFLAGS) \
-	$(CGL_CFLAGS) $(OSICONIC_CFLAGS) $(COLA_CFLAGS) \
-	$(OSIIPOPT_CFLAGS) $(am__append_2) $(am__append_3)
+AM_CPPFLAGS = $(CGLCONICLIB_CFLAGS) $(am__append_2) $(am__append_3)
 
 # This line is necessary to allow VPATH compilation
 # DEFAULT_INCLUDES = -I. -I`$(CYGPATH_W) $(srcdir)`
