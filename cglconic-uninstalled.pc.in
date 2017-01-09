@@ -6,5 +6,5 @@ Description: Conic Cut Generation Library
 URL: https://github.com/aykutbulut/CGL-CONIC
 Version: @PACKAGE_VERSION@
 Libs: ${libdir}/libCglConic.la @CGLCONICLIB_PCLIBS@
-Cflags: -I@abs_source_dir@/src -I@ABSBUILDDIR@/src
+Cflags: -I@abs_source_dir@/src -I@abs_source_dir@/src/CglConicGD1 -I@abs_source_dir@/src/CglConicGD2 -I@abs_source_dir@/src/CglConicIPM -I@abs_source_dir@/src/CglConicIPMint -I@abs_source_dir@/src/CglConicMIR -I@abs_source_dir@/src/CglConicOA -I@ABSBUILDDIR@/src
 Requires: @CGLCONICLIB_PCREQUIRES@
