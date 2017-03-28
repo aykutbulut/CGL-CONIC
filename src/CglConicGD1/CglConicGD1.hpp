@@ -66,6 +66,9 @@ public:
   // generate and add cuts, return conic interface
   OsiConicSolverInterface * generateAndAddCuts(OsiConicSolverInterface const & si,
                                     const CglTreeInfo info = CglTreeInfo());
+  OsiConicSolverInterface * generateAndAddBestCut(
+                                    OsiConicSolverInterface const & si,
+                                    const CglTreeInfo info = CglTreeInfo());
   int getNumCutsAdded() const;
 };
 

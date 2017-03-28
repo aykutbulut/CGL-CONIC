@@ -79,6 +79,7 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddCuts(
     int dis_var = it->first;
     int cut_cone = it->second;
     std::cout << "Adding cut using var " << dis_var
+              << " value " << solver->getColSolution()[dis_var]
               << " cone " << cut_cone << std::endl;
     // get equality constraints the cut cone members are in
     // get Ax=b
@@ -98,13 +99,114 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddCuts(
       delete cut;
     }
     else {
-      cuts_.push_back(cut);
+      // check cut first
+      OsiConicSolverInterface * nsi = si.clone();
+      add_cut(nsi, cut);
+      nsi->initialSolve();
+      if (!nsi->isProvenOptimal()) {
+        std::cerr << "Problem is not optimal after adding cut!" << std::endl;
+      }
+      else {
+        cuts_.push_back(cut);
+      }
+      delete nsi;
     }
     //add_cut(cut);
     delete[] rows;
   }
   add_cuts(solver);
   // clear cuts after adding them
+  clear_cuts();
+  //std::copy(cut_row.begin(), cut_row.end(), cut_row_in);
+  // once we determined the cut row, we can generate cut using any cone and
+  // any cone member we want.
+  return solver;
+}
+
+
+// generates cuts for each possible variable and add the best only.
+OsiConicSolverInterface * CglConicGD1::generateAndAddBestCut(
+                                     OsiConicSolverInterface const & si,
+                                     const CglTreeInfo info) {
+  // decide disjunction var and cut cone
+  std::vector<std::pair<int,int> > candidates;
+  candidates = compute_dis_var_cone(si);
+  std::vector<std::pair<int,int> >::const_iterator it;
+  // print cut candidates
+  for (it=candidates.begin(); it!=candidates.end(); it++) {
+    int dis_var = it->first;
+    int cut_cone = it->second;
+    std::cout << "Cut var " << dis_var
+              << " cone " << cut_cone << std::endl;
+  }
+  double initial_obj = si.getObjValue();
+  int best_var = -1;
+  int best_cone = -1;
+  double best_imp = 0.0;
+  CglConicGD1Cut * best_cut = NULL;
+  // check which (var,cone) pair is the best
+  for (it=candidates.begin(); it!=candidates.end(); it++) {
+    OsiConicSolverInterface * solver = si.clone();
+    int dis_var = it->first;
+    int cut_cone = it->second;
+    std::cout << "Checking cut using var " << dis_var
+              << " value " << solver->getColSolution()[dis_var]
+              << " cone " << cut_cone << std::endl;
+    // get equality constraints the cut cone members are in
+    // get Ax=b
+    int num_eq_rows;
+    int * rows;
+    get_rows(si, cut_cone, num_eq_rows, rows);
+    if (num_eq_rows==0) {
+      delete[] rows;
+      continue;
+    }
+    CglConicGD1Cut * cut = new CglConicGD1Cut(&si, num_eq_rows, rows,
+                                              cut_cone, dis_var);
+    if(!cut->valid()) {
+      std::cerr << "Generated cut is not valid." << std::endl;
+      delete cut;
+    }
+    else {
+      // add cut to a solver, solve and check the improvement
+      add_cut(solver, cut);
+      solver->initialSolve();
+      if (!solver->isProvenOptimal()) {
+        std::cerr << "Solver status is not optimal!" << std::endl;
+        continue;
+      }
+      std::cout << solver->isAbandoned() << std::endl;
+      std::cout << solver->isProvenOptimal() << std::endl;
+      std::cout << solver->isProvenPrimalInfeasible() << std::endl;
+      std::cout << solver->isProvenDualInfeasible() << std::endl;
+      std::cout << solver->isPrimalObjectiveLimitReached() << std::endl;
+      std::cout << solver->isDualObjectiveLimitReached() << std::endl;
+      std::cout << solver->isIterationLimitReached() << std::endl;
+
+      double obj = solver->getObjValue();
+      double imp = obj-initial_obj;
+      std::cout << "Improvement is " << imp << std::endl;
+      if (imp>best_imp) {
+        best_var = dis_var;
+        best_cone = cut_cone;
+        best_imp = imp;
+        best_cut = cut;
+      }
+      else {
+        delete cut;
+      }
+    }
+    delete[] rows;
+    delete solver;
+  }
+  // create a copy of the input
+  OsiConicSolverInterface * solver = si.clone();
+  if (best_cut) {
+    num_cuts_++;
+    cuts_.push_back(best_cut);
+    // add best cut only
+    add_cut(solver, best_cut);
+  }
   clear_cuts();
   //std::copy(cut_row.begin(), cut_row.end(), cut_row_in);
   // once we determined the cut row, we can generate cut using any cone and
