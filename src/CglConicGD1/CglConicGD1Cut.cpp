@@ -22,7 +22,7 @@ extern "C" {
                int *lwork, int *info);
 }
 
-#define EPS 1e-10
+#define EPS 1e-4
 
 // helper functions which are not class members
 static void svDecompICL(int m, int n, double * A, double * VT);
@@ -30,14 +30,14 @@ static void solveSM(int n, double *A, double *b, double *x);
 static void eigDecompICL(int n, double * L, double * eig);
 // returns largest root of a quadratic formula
 static double quad_formula(double quad_term, double lin_term,
-		    double ind_term);
+                    double ind_term);
 // compute roots of a quadratic formula
 static void roots(double a, double b, double c, double & root1,
-		  double & root2);
+                  double & root2);
 
 CglConicGD1Cut::CglConicGD1Cut(OsiConicSolverInterface const * solver,
-			       int num_rows, int * rows,
-			       int cut_cone, int dis_var)
+                               int num_rows, int * rows,
+                               int cut_cone, int dis_var)
 : solver_(solver) {
   num_rows_ = num_rows;
   dis_var_ = dis_var;
@@ -52,9 +52,10 @@ CglConicGD1Cut::CglConicGD1Cut(OsiConicSolverInterface const * solver,
   vecq_ = 0;
   eigQ_ = 0;
   vecx0_ = 0;
-  vecx0J_ = 0;
   cmembers_ = 0;
   cone_members_ = 0;
+  Jtilde_ = 0;
+  rho_tilde_ = 0;
   new_matA_ = 0;
   new_rhs_ = 0;
   cut_type_ = 1;
@@ -79,6 +80,7 @@ CglConicGD1Cut::CglConicGD1Cut(OsiConicSolverInterface const * solver,
     valid_ = false;
     return;
   }
+  infeasible_ = false;
   // create disjunction from disj_var_
   compute_disjunction();
   generate_cut();
@@ -96,6 +98,7 @@ void CglConicGD1Cut::compute_disjunction() {
       break;
   }
   a[new_dis_index] = 1.0;
+  rel_dis_var_ = new_dis_index;
   // define alpha and beta
   double alpha = floor(solver_->getColSolution()[dis_var_]);
   double beta = alpha+1.0;
@@ -123,6 +126,10 @@ void CglConicGD1Cut::generate_cut() {
     // irrelevant
     return;
   }
+  if (valid_ and infeasible_) {
+    // problem is infeasible
+    return;
+  }
   // compute rho(tau), rho_tau_
   compute_rho_tau();
   // compute q(tau), q_tau_
@@ -132,7 +139,7 @@ void CglConicGD1Cut::generate_cut() {
   // compute matrix as a part of the cut to add to model
   compute_new_A();
   // compute right-hand-side that corresponds to NewA
-  compute_new_rhs();
+  //compute_new_rhs();
 }
 
 void CglConicGD1Cut::compute_vectorq() {
@@ -141,20 +148,19 @@ void CglConicGD1Cut::compute_vectorq() {
   for (int i=0; i<csize_; ++i) {
     vecx0_[i] = x0[cmembers_[i]];
   }
-  vecx0J_ = new double[csize_];
-  std::copy(vecx0_, vecx0_+csize_, vecx0J_);
-  vecx0J_[0] = -1.0*vecx0J_[0];
+  vecx0_[0] = -1.0*vecx0_[0];
   int m = csize_;
   int n = m-num_rows_;
   vecq_ = new double[n]();
-  cblas_dgemv (CblasColMajor, CblasTrans, m, n, 1.0, matH_, m, vecx0J_, 1,
-	       0.0, vecq_, 1);
+  cblas_dgemv (CblasColMajor, CblasTrans, m, n, 1.0, matH_, m, vecx0_, 1,
+               0.0, vecq_, 1);
+  vecx0_[0] = -1.0*vecx0_[0];
 }
 
 void CglConicGD1Cut::compute_rho() {
   int m = csize_;
-  rho_ = - (vecx0J_[0]*vecx0J_[0]);
-  rho_ += cblas_ddot(m-1, vecx0J_+1, 1, vecx0J_+1, 1);
+  rho_ = - (vecx0_[0]*vecx0_[0]);
+  rho_ += cblas_ddot(m-1, vecx0_+1, 1, vecx0_+1, 1);
 }
 
 void CglConicGD1Cut::classify_quadric() {
@@ -163,6 +169,7 @@ void CglConicGD1Cut::classify_quadric() {
   int n = m-num_rows_;
   double * Qq = new double[n];
   solveSM(n, matQ_, vecq_, Qq);
+  // quadricRHS is q^T Q^-1 q - \rho
   double qadricRHS = cblas_ddot(n, vecq_, 1, Qq, 1) - rho_;
   //Copy matrix Q
   matV_ = new double[n*n];
@@ -171,27 +178,12 @@ void CglConicGD1Cut::classify_quadric() {
   eigQ_ = new double[n]();
   //Compute the eigenvalue decomposition
   eigDecompICL(n, matV_, eigQ_);
-  quad_type_ = 'e';
-  if( eigQ_[0] < -EPS ){
-    if( eigQ_[1] < EPS){
-      quad_type_ = 'u';
-      active_ = false;
-    }
-    else if (fabs(qadricRHS) < EPS)
-      quad_type_ = 'k';
-    else
-      quad_type_ = 'h';
-  }
-  else if (fabs(eigQ_[0]) < EPS) {
-    numZEig_ = 0;
-    for (int i=0; i<n; ++i) {
-      if (fabs(eigQ_[i]) < EPS)
-	numZEig_++;
-    }
-    quad_type_ = 'p';
-    active_ = false;
-    if (eigQ_[1] < EPS) {
-      quad_type_ = 'u';
+  // in case nonpositive eigenvalues bail out
+  for (int i=0; i<n; ++i) {
+    if (eigQ_[i]<1e-3) {
+      std::cout << "Q is not positive definite!" << std::endl;
+      valid_ = false;
+      break;
     }
   }
   delete [] Qq;
@@ -221,10 +213,10 @@ void CglConicGD1Cut::compute_matrixA() {
   for (int i=0; i<nc; ++i) {
     if (cone_members_[i]==1) {
       for (int j=0; j<nr; ++j) {
-	if (row_members[j]==1) {
-	  matA_[rci*num_rows_+rri] = mat->getCoefficient(j,i);
-	  rri++;
-	}
+        if (row_members[j]==1) {
+          matA_[rci*num_rows_+rri] = mat->getCoefficient(j,i);
+          rri++;
+        }
       }
       rri = 0;
       rci++;
@@ -250,6 +242,19 @@ void CglConicGD1Cut::compute_matrixH() {
   }
   delete[] tempA;
   delete[] VT;
+
+  // Set H hard coded for debugging
+  // matH_[1]= 0.3739;
+  // matH_[2]= -0.5764;
+  // matH_[3]= -0.6203;
+  // matH_[4]= 0.3094;
+  // matH_[5]= 0.2178;
+  // matH_[7]= -0.5067;
+  // matH_[8]= -0.6141;
+  // matH_[9]= 0.4788;
+  // matH_[10]= 0.2179;
+  // matH_[11]= 0.2991;
+
   // change matH_ to col order
   // double * tempH new double[(num_cols-num_rows_)*num_cols];
   // cblas_dcopy((num_cols-num_rows_)*num_cols, matH_, 1, tempH, 1);
@@ -269,12 +274,10 @@ void CglConicGD1Cut::compute_matrixQ() {
   int m = csize_;
   int n = m-num_rows_;
   matQ_ = new double[n*n]();
-  // Temporary array, stores the firs row of H
-  //double * d = new double[n];
+  // Temporary array, stores the first row of H
   double * d = new double[n];
   cblas_dcopy(n, matH_, m, d, 1);
   // Temporary array, exlcudes the first row of H
-  //double * A = new double[(m-1)*n];
   double * A = new double[(m-1)*n];
   for(int i=0; i<n; i++)
     cblas_dcopy(m-1, matH_+i*m+1, 1, A+i*(m-1), 1);
@@ -288,129 +291,125 @@ void CglConicGD1Cut::compute_matrixQ() {
 
 void CglConicGD1Cut::compute_tau() {
   int m = csize_;
-  int n = m-num_rows_;
-  // initialize vecq_tau_ to vec_q
-  vecq_tau_ = new double[n];
-  std::copy(vecq_, vecq_+n, vecq_tau_);
-  //Computes a^TQ^(-1)a
-  double * chol = new double[n*n];
-  cblas_dcopy(n*n, matQ_, 1, chol, 1);
-  double * Qinv_a = new double[n];
-  // u is the disjunction coefficient, we compute a from u in w-space
-  // a = H^T u
-  // todo(aykut) what if a is 0?
-  double const * u = disjunction_->get_c1();
+  int n = csize_-num_rows_;
+
+  print_vector(csize_, vecx0_, "x0");
+
+  // === Compute disjunction in u-space ===
+  // c is the disjunction coefficient, we compute a from c in u-space
+
+  print_matrix(1, m-n, m, matA_, "A");
+  print_matrix(1, m, n, matH_, "H");
+  print_matrix(1, n, n, matQ_, "Q");
+  print_matrix(1, n, n, matV_, "V");
+  print_vector(n, eigQ_, "eigQ");
+  print_vector(n, vecq_, "q");
+  print_scalar(rho_, "rho");
+
   a_ = new double[n]();
-  cblas_dgemv(CblasColMajor, CblasTrans, m, n, 1.0, matH_, m, u, 1, 0.0, a_, 1);
-  // normilize a
+  double const * c = disjunction_->get_c1();
+  double norm_of_q = cblas_dnrm2(n, vecq_, 1);
+  cblas_dgemv(CblasColMajor, CblasTrans, m, n, norm_of_q,
+              matH_, m, c, 1, 0.0, a_, 1);
+  // normalize a
   double norm_of_a = cblas_dnrm2(n, a_, 1);
-  if (norm_of_a<EPS) {
-    // todo(aykut) does this mean that problem is infeasible?
-    valid_ = false;
-    delete[] chol;
-    delete[] Qinv_a;
-    return;
+  cblas_dscal(n, 1.0/norm_of_a, a_, 1);
+  print_vector(n, a_, "normalized a");
+
+  // compute alpha_ and beta_ in regularized space
+  {
+    double cTx0 = vecx0_[rel_dis_var_];
+    double * Hq = new double[m]();
+    cblas_dgemv(CblasColMajor, CblasNoTrans, m, n, 1.0,
+                matH_, m, vecq_, 1, 0.0, Hq, 1);
+    print_vector(m, Hq, "Hq");
+    double cTHq = Hq[rel_dis_var_];
+    alpha_ = floor(vecx0_[rel_dis_var_]) - cTx0 + cTHq;
+    alpha_ = alpha_/norm_of_a;
+    beta_ = ceil(vecx0_[rel_dis_var_]) - cTx0 + cTHq;
+    beta_ = beta_/norm_of_a;
+    delete[] Hq;
+    print_scalar(alpha_, "alpha normalized");
+    print_scalar(beta_, "beta normalized");
   }
-  // todo(aykut) do this using blas
-  for (int i=0; i<n; ++i) {
-    a_[i] = a_[i]/norm_of_a;
-  }
-  // end of computing a
-  cblas_dcopy(n, a_, 1, Qinv_a, 1);
-  char U = 'U';
-  int nrhs = 1;
-  int info = 0;
-  //Matrix times vector Q^(-1)a
-  dposv_(&U, &n, &nrhs, chol, &n, Qinv_a, &n, &info);
-  //Scalar aQinv_a
-  double aQinv_a = cblas_ddot(n, a_, 1, Qinv_a, 1);
-  //Scalar qQinv_a
-  double qQinv_a = cblas_ddot(n, vecq_tau_, 1, Qinv_a, 1);
-  //Matrix times vector Q^(-1)q
-  dirTestV_ = new double[n]();
-  double * Qinv_q = new double[n];
-  cblas_dcopy(n, vecq_tau_, 1, Qinv_q, 1);
-  dpotrs_(&U, &n, &nrhs, chol, &n, Qinv_q, &n, &info);
-  // todo(aykut) dirTestV_ is -Qinv_q
-  cblas_daxpy(n, -1.0, Qinv_q, 1, dirTestV_, 1);
-  //Scalar qQ^{-1}q
-  double qQinv_q = cblas_ddot(n, vecq_tau_, 1, Qinv_q, 1);
-  //quadratic equation
-  // todo(aykut) see we have right alpha/beta setting
-  // todo(aykut) alpha and beta is wrong you should fix them so that they are in w space.
-  // alpha <- alpha - u^Tx0
-  // beta <- beta - u^Tx0
-  double uT_x0 = cblas_ddot(m, u, 1, vecx0_, 1);
-  alpha_ = disjunction_->get_c20() - uT_x0;
-  beta_ = disjunction_->get_c10() - uT_x0;
-  alpha_ = alpha_ / norm_of_a;
-  beta_ = beta_ / norm_of_a;
-  double quadTerm = (alpha_ - beta_)*(alpha_ - beta_)*aQinv_a;
-  double linearTerm = 4*aQinv_a*(qQinv_q - rho_)
-    - (alpha_ + beta_ + 2*qQinv_a)*(alpha_ + beta_ + 2*qQinv_a)
-    + (alpha_ - beta_)*(alpha_ - beta_);
-  double indTerm = 4*(qQinv_q - rho_);
-  double intr1 = (beta_ + qQinv_a)*(beta_ + qQinv_a) - aQinv_a*(qQinv_q - rho_);
-  double intr2 = (alpha_ + qQinv_a)*(alpha_ + qQinv_a) - aQinv_a*(qQinv_q - rho_);
-  if(intr1 > -EPS && intr2 > -EPS)
-    // todo(aykut) is it necessary to have it as a class member?
-    // this means both hyperplanes (a,alpha) and (a,beta) does not intersect with
-    // quadric, I think this may indicate infeasible problem.
-    valid_ = false;
-  if (intr1 > -EPS) {
-    if (intr2 < -EPS) {
-      // one piece of disjunction does not intersect with quadric (a,alpha)
-      // only (a,beta) intersects with quadric
-      cut_type_ = 2;
-      linear_cut_ind_ = new int[1];
-      linear_cut_ind_[0] = dis_var_;
-      linear_cut_coef_ = new double[1];
-      linear_cut_coef_[0] = 1.0;
-      linear_cut_rhs_ = ceil(disjunction_->get_c20());
+
+  // == check whether the disjunctive hyperplane (transfered into the
+  // regularized space) intersects with the quadric in the regularized space
+  {
+    bool alpha_intersects = (alpha_*alpha_ <= 1);
+    bool beta_intersects = (beta_*beta_ <= 1);
+    if (alpha_intersects && beta_intersects) {
+      // both hyperplanes intersects regularized quadric
+      // cool, keep working on it.
     }
-  }
-  if (intr2 > -EPS){
-    if (intr1 < -EPS){
-      // one piece of disjunction does not intersect with quadric (a,alpha)
-      // only (a,beta) intersects with quadric
+    else if (alpha_intersects) {
+      // only ax=alpha intersects quadric
+      // hand linear cut ax <= alpha to solver.
+      valid_ = true;
       cut_type_ = 3;
       linear_cut_ind_ = new int[1];
       linear_cut_ind_[0] = dis_var_;
       linear_cut_coef_ = new double[1];
       linear_cut_coef_[0] = 1.0;
-      linear_cut_rhs_ = floor(disjunction_->get_c10());
+      linear_cut_rhs_ = ceil(disjunction_->get_c10());
+      return;
+    }
+    else if(beta_intersects) {
+      // only ax=beta intersects quadric
+      // hand linear cut ax >= beta to solver.
+
+      valid_ = true;
+      cut_type_ = 2;
+      linear_cut_ind_ = new int[1];
+      linear_cut_ind_[0] = dis_var_;
+      linear_cut_coef_ = new double[1];
+      linear_cut_coef_[0] = 1.0;
+      linear_cut_rhs_ = floor(disjunction_->get_c20());
+      return;
+    }
+    else {
+      // none of the hyperplanes intersect the quadric, problem is infeasible.
+      valid_ = true;
+      infeasible_ = true;
     }
   }
-  // quadformula returns 1 when the roots are imaginary which will
-  // not happen if quadric intersects with disjunction hyperplanes
-  tau_ = quad_formula(quadTerm, linearTerm, indTerm);
-  // todo(aykut) what is 1e-6? another eps?
-  // tau should be negative, check paper, -1 > tau_2 > tau_1
-  if (cut_type_!=2 && cut_type_!=3) {
-    // todo(aykut) in the essence this check looks same as
-    // intr1>-EPS intr2>-EPS to me
-    if(fabs(tau_ + (1.0/aQinv_a)) < 1e-6 || tau_ > EPS) {
-      // this means tau is very close to zero (in case of unit spheres) or
-      // positive
-      valid_ = false;
-    }
+  // compute coefficients of polynomial
+  double quad_coef = (alpha_-beta_)*(alpha_-beta_);
+  double norm_q_square = cblas_ddot(m, vecq_, 1, vecq_, 1);
+  double aTq = cblas_ddot(m, a_, 1, vecq_, 1);
+  double lin_coef = 4.0*norm_q_square -
+    (alpha_+beta_+2*aTq)*(alpha_+beta_+2*aTq) +
+    (alpha_-beta_)*(alpha_-beta_);
+  double const_term = 4.0*norm_q_square;
+  if (lin_coef*lin_coef < 4.0*quad_coef*const_term) {
+    std::cerr << "Imaginary root!" << std::endl;
+    valid_ = false;
   }
-  delete [] chol;
-  delete [] Qinv_a;
-  delete [] Qinv_q;
+  else {
+    // quadformula returns 1 when the roots are imaginary which will
+    // not happen if quadric intersects with disjunction hyperplanes
+    tau_ = quad_formula(quad_coef, lin_coef, const_term);
+  }
+  print_scalar(tau_, "tau");
+  if (tau_ > -1.3) {
+    valid_ = false;
+  }
 }
 
 // compute rho(tau), rho_tau_
 void CglConicGD1Cut::compute_rho_tau() {
   rho_tau_ += tau_*alpha_*beta_;
+  print_scalar(rho_tau_, "rho_tau");
 }
 
  // compute q(tau), q_tau_
 void CglConicGD1Cut::compute_q_tau() {
-  int m = csize_;
-  int n = m-num_rows_;
-  double aux = -tau_ * (alpha_ + beta_) / 2;
+  int n = csize_-num_rows_;
+  vecq_tau_ = new double[n]();
+  std::copy(vecq_, vecq_+n, vecq_tau_);
+  double aux = -0.5*tau_*(alpha_ + beta_);
   cblas_daxpy(n, aux, a_, 1, vecq_tau_, 1);
+  print_vector(n, vecq_tau_, "q(tau)");
 }
 
  // compute Q(tau), Q_tau_
@@ -420,74 +419,209 @@ void CglConicGD1Cut::compute_Q_tau() {
   matQ_tau_ = new double[n*n];
   cblas_dcopy(n*n, matQ_, 1, matQ_tau_, 1);
   cblas_dsyr(CblasColMajor, CblasUpper, n, tau_, a_, 1,
-	     matQ_tau_, n);
+             matQ_tau_, n);
+  // copy upper triangular to lower triangular part
+  // for each column
+  for (int i=0; i<n; ++i) {
+    // for each row
+    for (int j=0; j<i; ++j) {
+      matQ_tau_[j*n+i] = matQ_tau_[i*n+j];
+    }
+  }
+  print_matrix(1, n, n, matQ_tau_, "Q(tau)");
 }
 
 // compute matrix as a part of the cut to add to model
 void CglConicGD1Cut::compute_new_A() {
-  //Initilize the new A matrix section
   int m = csize_;
-  int n = m-num_rows_;
-  new_matA_ = new double[n*m]();
-  char jobz = 'V';
-  char uplo = 'U';
-  int info = 0;
-  int lwork = -1;
-  double worksize[1];
-  double * L = new double[n*n];
-  cblas_dcopy(n*n, matQ_tau_, 1, L, 1);
-  double * d = new double[n];
-  // eigenvalue decomposition, L holds normalized eigenvectors,
-  // d holds eigenvalues. Q = L^TDL
-  dsyev_(&jobz, &uplo, &n, L, &n, d, worksize, &lwork, &info);
-  lwork = (int) worksize[0];
-  double * work = new double[lwork];
-  dsyev_(&jobz, &uplo, &n, L, &n, d, work, &lwork, &info);
-  if (cut_type_ > 0){
-    double * LDinv = new double[n*n]();
-    // todo(aykut) why do we need this? we already know the leading
-    // variable of the conic constraint.
-    varHead_ = -1;
-    // the following loop is for computing LD^-1
-    for(int i = 0; i < n; i++){
-      //printf("d[%d] = %f\n", i, d[i]);
-      if(fabs(d[i]) < 1e-2){
-	valid_ = false;
-      }
-      if (d[i] < -EPS){
-	//printf("head var = %d\n", i);
-	varHead_ = i;
-	cblas_daxpy(n, 1.0/sqrt(fabs(d[i])), L+n*i, 1, LDinv+n*i, 1);
-	dirTestU_ = new double[n]();
-	cblas_dcopy(n, L+n*i, 1, dirTestU_, 1);
-      }
-      else {
-	cblas_daxpy(n, 1/sqrt(d[i]), L+n*i, 1, LDinv + n*i, 1);
+  int n = csize_-num_rows_;
+  // compute eigenvalue decomposition of Qtau_
+  double * Vtau = new double[n*n];
+  cblas_dcopy(n*n, matQ_tau_, 1, Vtau, 1);
+  double * eigQtau = new double[n]();
+  eigDecompICL(n, Vtau, eigQtau);
+  print_matrix(1, n, n, Vtau, "V(tau)");
+  print_vector(n, eigQtau, "eig Q(tau)");
+  // check whether any of the eigenvalues are zero.
+  for (int i=0; i<n; ++i) {
+    if (eigQtau[i]<0.001 && eigQtau[i]>-0.001) {
+      delete[] Vtau;
+      delete[] eigQtau;
+      valid_ = false;
+      return;
+    }
+  }
+
+  // at most 1 eigenvalue must be negative
+  {
+    int num_neg_eigen = 0;
+    for (int i=0; i<n; ++i) {
+      if (eigQtau[i]<0.0) {
+        num_neg_eigen++;
       }
     }
-    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, csize_, n,
-		n, -1.0, matH_, csize_, LDinv, n, 0.0, new_matA_, csize_);
+    if (num_neg_eigen>1) {
+      std::cerr << "Number of negative eigenvalues should be at most 1!"
+                << std::endl;
+      delete[] Vtau;
+      delete[] eigQtau;
+      valid_ = false;
+      return;
+    }
+  }
+
+  // compute Dtilde^{1/2}
+  double * sqrtDtau = new double[n*n]();
+  for (int i=0; i<n; ++i) {
+    sqrtDtau[i*n+i] = sqrt(fabs(eigQtau[i]));
+  }
+  print_matrix(1, n, n, sqrtDtau, "sqrtDtau");
+
+  // compute W
+  double * W = new double[n*n];
+  cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, n, n,
+              n, 1.0, Vtau, n, sqrtDtau, n, 0.0, W, n);
+  print_matrix(1, n, n, W, "W");
+
+  // compute wbar
+  double * wbar = new double[n]();
+  solveSM(n, matQ_tau_, vecq_tau_, wbar);
+  for (int i=0; i<n; ++i) {
+    wbar[i] = -wbar[i];
+  }
+  print_vector(n, wbar, "wbar");
+
+
+  // TODO(AYKUT) CAN WE REMOVE THIS SCALING
+  double norm_q = cblas_dnrm2(n, vecq_, 1);
+  // print_scalar(norm_q, "||q||");
+  if (norm_q<0.01) {
+    std::cerr << "q is very close to 0, cutting failed."
+              << std::endl;
+    delete[] Vtau;
+    delete[] eigQtau;
+    delete[] sqrtDtau;
+    delete[] W;
+    delete[] wbar;
+    valid_ = false;
+    return;
   }
   else {
-    varHead_ = -1;
-    for(int i=0; i<n; i++) {
-      if(fabs(d[i]) < 1e-2){
-	valid_ = false;
+    // Anew is 1/sqrt(q'*q) * W*H'
+    new_matA_ = new double[n*m]();
+    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, n, m, n,
+                1.0/norm_q, W, n, matH_, m, 0.0, new_matA_, n);
+    print_matrix(1, n, m, new_matA_, "Anew");
+
+    new_rhs_ = new double[n]();
+    // bnew is coef*W*(H'*x0 - q) + W * wbar
+    // pick rel_dis_var_ th row of H.
+    cblas_dgemv(CblasColMajor, CblasTrans, m, n, 1.0, matH_, m,
+                vecx0_, 1,
+                0.0, new_rhs_, 1);
+    // subtract q
+    cblas_daxpy(n, -1.0, vecq_, 1, new_rhs_, 1);
+    // W(H'x0-q)
+    cblas_dgemv(CblasColMajor, CblasNoTrans, n, n, 1.0, W, n,
+                new_rhs_, 1,
+                0.0, new_rhs_, 1);
+    //print_vector(n, new_rhs_, "W*(H'*x0-q)");
+    // coef*W(H'x0-q)
+    cblas_dscal(n, 1.0/norm_q, new_rhs_, 1);
+    // add Wwbar
+    double * Wwbar = new double[n];
+    cblas_dgemv(CblasColMajor, CblasNoTrans, n, n, 1.0, W, n,
+                wbar, 1,
+                0.0, Wwbar, 1);
+    cblas_daxpy(n, 1.0, Wwbar, 1, new_rhs_, 1);
+    print_vector(n, new_rhs_, "bnew");
+
+    // negate first row of A and rhs[0] if -W(:,1)'*wbar is less than 0.0
+    if (Wwbar[0]>0) {
+      // negate first row of A
+      for (int i=0; i<m; ++i) {
+        new_matA_[i*n] = -new_matA_[i*n];
       }
-      if (d[i] < -EPS) {
-	varHead_ = i;
-	cblas_daxpy(n, sqrt(fabs(d[i])), L+n*i, 1, new_matA_+i, n);
-	dirTestU_ = new double[n]();
-	cblas_dcopy(n, L+n*i, 1, dirTestU_, 1);
-      }
-      else {
-	cblas_daxpy(n, sqrt(d[i]), L+n*i, 1, new_matA_+i, n);
-      }
+      // negerate rhs
+      new_rhs_[0] = -new_rhs_[0];
     }
+    delete[] Wwbar;
   }
-  delete[] work;
-  delete[] L;
-  delete[] d;
+
+  // TODO(AYKUT) EIGENVALUE ORDERING
+
+
+  delete[] Vtau;
+  delete[] eigQtau;
+  delete[] sqrtDtau;
+  delete[] W;
+  delete[] wbar;
+
+
+  //Initilize the new A matrix section
+  // int m = csize_;
+  // int n = m-num_rows_;
+  // new_matA_ = new double[n*m]();
+  // char jobz = 'V';
+  // char uplo = 'U';
+  // int info = 0;
+  // int lwork = -1;
+  // double worksize[1];
+  // double * L = new double[n*n];
+  // cblas_dcopy(n*n, matQ_tau_, 1, L, 1);
+  // double * d = new double[n];
+  // // eigenvalue decomposition, L holds normalized eigenvectors,
+  // // d holds eigenvalues. Q = L^TDL
+  // dsyev_(&jobz, &uplo, &n, L, &n, d, worksize, &lwork, &info);
+  // lwork = (int) worksize[0];
+  // double * work = new double[lwork];
+  // dsyev_(&jobz, &uplo, &n, L, &n, d, work, &lwork, &info);
+  // if (cut_type_ > 0){
+  //   double * LDinv = new double[n*n]();
+  //   // todo(aykut) why do we need this? we already know the leading
+  //   // variable of the conic constraint.
+  //   varHead_ = -1;
+  //   // the following loop is for computing LD^-1
+  //   for(int i = 0; i < n; i++){
+  //     //printf("d[%d] = %f\n", i, d[i]);
+  //     std::cout << "d[" << i << "] " << d[i] << std::endl;
+  //     if(fabs(d[i]) < 1e-2){
+  //       valid_ = false;
+  //     }
+  //     if (d[i] < 0.0){
+  //       //printf("head var = %d\n", i);
+  //       varHead_ = i;
+  //       cblas_daxpy(n, 1.0/sqrt(fabs(d[i])), L+n*i, 1, LDinv+n*i, 1);
+  //       dirTestU_ = new double[n]();
+  //       cblas_dcopy(n, L+n*i, 1, dirTestU_, 1);
+  //     }
+  //     else {
+  //       cblas_daxpy(n, 1/sqrt(d[i]), L+n*i, 1, LDinv + n*i, 1);
+  //     }
+  //   }
+  //   cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, csize_, n,
+  //               n, -1.0, matH_, csize_, LDinv, n, 0.0, new_matA_, csize_);
+  // }
+  // else {
+  //   varHead_ = -1;
+  //   for(int i=0; i<n; i++) {
+  //     if(fabs(d[i]) < 1e-2){
+  //       valid_ = false;
+  //     }
+  //     if (d[i] < -EPS) {
+  //       varHead_ = i;
+  //       cblas_daxpy(n, sqrt(fabs(d[i])), L+n*i, 1, new_matA_+i, n);
+  //       dirTestU_ = new double[n]();
+  //       cblas_dcopy(n, L+n*i, 1, dirTestU_, 1);
+  //     }
+  //     else {
+  //       cblas_daxpy(n, sqrt(d[i]), L+n*i, 1, new_matA_+i, n);
+  //     }
+  //   }
+  // }
+  // delete[] work;
+  // delete[] L;
+  // delete[] d;
 }
 
 // compute right-hand-side that corresponds to NewA
@@ -506,11 +640,11 @@ void CglConicGD1Cut::compute_new_rhs() {
   int info;
   cblas_dcopy(n*n, matQ_tau_, 1, L, 1);
   dsysv_(&uplo, &n, &nrhs, L, &n, ipiv, aux, &n,
-	 &worksize, &lwork, &info);
+         &worksize, &lwork, &info);
   lwork = (int) worksize;
   double * work = new double[lwork];
   dsysv_(&uplo, &n, &nrhs, L, &n, ipiv, aux, &n,
-	 work, &lwork, &info);
+         work, &lwork, &info);
   if (cut_type_>0) {
     cblas_daxpy(n, 1.0, aux, 1, dirTestV_, 1);
     double dirtest;
@@ -522,11 +656,11 @@ void CglConicGD1Cut::compute_new_rhs() {
     }
     if(dirtest < -EPS){
       for(int i=0; i<m; i++){
-	new_matA_[varHead_*m+i]*= -1.0;
+        new_matA_[varHead_*m+i]*= -1.0;
       }
     }
     cblas_dgemv(CblasColMajor, CblasNoTrans, m, n, -1.0, matH_,
-		m, aux, 1, 0.0, new_rhs_, 1);
+                m, aux, 1, 0.0, new_rhs_, 1);
     cblas_daxpy(m, 1.0, vecx0_, 1, new_rhs_, 1);
   }
   else {
@@ -541,95 +675,17 @@ void CglConicGD1Cut::compute_new_rhs() {
     double dirtest = cblas_ddot(n, dirTestV_, 1, dirTestU_, 1);
     if(dirtest < -EPS){
       for(int i=0; i<n; i++) {
-	new_matA_[varHead_ + m*i]*= -1.0;
+        new_matA_[varHead_ + m*i]*= -1.0;
       }
     }
     //Computes V^T a
     cblas_dgemv(CblasColMajor, CblasNoTrans, n, n, -1.0, new_matA_,
-		n, aux, 1, 0.0, new_rhs_, 1);
+                n, aux, 1, 0.0, new_rhs_, 1);
   }
   delete[] work;
   delete[] ipiv;
   delete[] aux;
   delete[] L;
-}
-
-
-void CglConicGD1Cut::regularize() {
-  // double alpha = disjunction_->get_c10();
-  // double beta = disjunction_->get_c20();
-  double * rega = new double[csize_];
-  double tildeD = 0.0;
-  double const * a = disjunction_->get_c1();
-  //Computes V^T a
-  cblas_dgemv(CblasColMajor, CblasTrans, csize_, csize_, 1.0, matV_,
-	      csize_, a, 1, 0.0, rega, 1);
-  //Computes  tildeD^(-1)v^T a
-  for (int i=0; i<csize_; i++){
-    tildeD = sqrt(fabs(eigQ_[i]));
-    if (tildeD<EPS)
-      tildeD = 1.0;
-    rega[i] = rega[i]/tildeD;
-  };
-  double scaling = cblas_ddot(csize_, rega, 1, rega, 1);
-  if (quad_type_== 'p') {
-    tau_ = -1.0 / scaling;
-    valid_ = false;
-  }
-  else {
-    //std::cout<<"Is not paraboloid "<<std::endl;
-    double nrma = cblas_dnrm2(csize_, rega, 1);
-    cblas_dscal (csize_, 1/nrma, rega, 1);
-    double * Qq = new double[csize_];
-    solveSM(csize_, matQ_, vecq_, Qq);
-    double aQp = cblas_ddot(csize_, a, 1, Qq, 1);
-    double regalpha = alpha_ + aQp;
-    double regbeta = beta_ + aQp;
-    double qadricRHS = cblas_ddot(csize_, vecq_, 1, Qq, 1) - rho_;
-    rho_ = 0.0;
-    if (qadricRHS < -EPS)
-      rho_ = 1.0;
-    else if(qadricRHS > EPS)
-      rho_ = -1.0;
-    double denom = sqrt(fabs(qadricRHS));
-    if (denom < EPS)
-      denom = nrma;
-    else
-      denom *= nrma;
-    regalpha /= denom;
-    regbeta /= denom;
-    double firsta2 = rega[0]*rega[0];
-    double squarecoeff = (1 - 2*firsta2)*(regalpha - regbeta)*(regalpha - regbeta)/4;
-    double linearcoeff = (-1)*( rho_*(1 - 2*firsta2) + regalpha*regbeta);
-    double scalar = -rho_;
-    tau1_ = tau2_ = 0.0;
-    double root1, root2;
-    root1 = root2 = 0.0;
-    roots(squarecoeff, linearcoeff, scalar, root1, root2);
-    tau1_ = std::min(root1, root2);
-    tau2_ = std::max(root1, root2);
-    if (firsta2 > (0.5 - EPS)) {
-      tau_ = tau2_ / scaling;
-      quad_type_ = 'c';
-      valid_ = false;
-      if (tau2_ < (1/(2*firsta2 - 1) - EPS) ){
-	quad_type_ = 'k';
-	valid_ = true;
-      }
-    }
-    else {
-      tau_ = tau1_ / scaling ;
-      quad_type_ = 'c';
-      valid_ = false;
-      if (tau1_ > (1/(2*firsta2 - 1) + EPS) ){
-	//std::cout<<"Is a cone\n "<<std::endl;
-	quad_type_ = 'k';
-	valid_ = true;
-      }
-    }
-    delete [] Qq;
-  }
-  delete [] rega;
 }
 
 
@@ -654,53 +710,53 @@ void CglConicGD1Cut::regularize() {
 //     if(ccgenerator_->getType() > 0){
 //       /* Register the indices of the new variables */
 //       for(int i = 0; i < elliDim_; i ++) {
-// 	newRowsub[i+1] = numVarP - elliDim_ + i;
+//      newRowsub[i+1] = numVarP - elliDim_ + i;
 //       }
 //       /* In the original variables part we add and identity matrix */
 //       newRowval[0] = 1.0;
 //       /* Pointer to acces the values
-// 	 of the entries for the new constraints */
+//       of the entries for the new constraints */
 //       double * indexA;
 //       for(int i = 0; i < numVars_; i++){
-// 	/* Get the indices for the new variables in the problem */
-// 	newRowsub[0] = vars[i];
-// 	/* Get the values of the entries of the new constraints */
-// 	for(int j = 0; j < elliDim_; j++) {
-// 	  indexA = newAslice_ + i + j * numVars_;
-// 	  newRowval[j+1] = (fabs(*(indexA)) < ICLEPS)?0.0:*(indexA);
-// 	}
-// 	/* Add the constraints bounds, i.e the right hand side */
-// 	solver->setRowBounds(numConP - numVars_ + i,
-// 			     *(newbslice_+i),
-// 			     *(newbslice_+i));
-// 	/* Add the new row to the constraint matrix */
-// 	solver->setRow(numConP - numVars_ + i, elliDim_+1,
-// 		       newRowsub, newRowval);
+//      /* Get the indices for the new variables in the problem */
+//      newRowsub[0] = vars[i];
+//      /* Get the values of the entries of the new constraints */
+//      for(int j = 0; j < elliDim_; j++) {
+//        indexA = newAslice_ + i + j * numVars_;
+//        newRowval[j+1] = (fabs(*(indexA)) < ICLEPS)?0.0:*(indexA);
+//      }
+//      /* Add the constraints bounds, i.e the right hand side */
+//      solver->setRowBounds(numConP - numVars_ + i,
+//                           *(newbslice_+i),
+//                           *(newbslice_+i));
+//      /* Add the new row to the constraint matrix */
+//      solver->setRow(numConP - numVars_ + i, elliDim_+1,
+//                     newRowsub, newRowval);
 //       }
 //     }
 //     else {
 //       /* Register the indices of the new variables */
 //       for(int i = 0; i < elliDim_; i ++) {
-// 	newRowsub[i] = vars[i];
+//      newRowsub[i] = vars[i];
 //       }
 //       /* In the new variables part we add and identity matrix */
 //       newRowval[elliDim_] = 1.0;
 //       double * indexA;
 //       for(int i = 0; i < numVars_; i++){
-// 	/* Get the indices for the new variables in the problem */
-// 	newRowsub[elliDim_] = numVarP - elliDim_ + i;
-// 	/* Get the values of the entries of the new constraints */
-// 	for(int j = 0; j < elliDim_; j++) {
-// 	  indexA = newAslice_ + i + j * numVars_;
-// 	  newRowval[j] = (fabs(*(indexA)) < ICLEPS)?0.0:*(indexA);
-// 	}
-// 	/* Add the constraints bounds, i.e the right hand side */
-// 	solver->setRowBounds(numConP - numVars_ + i,
-// 			     *(newbslice_+i),
-// 			     *(newbslice_+i));
-// 	/* Add the new row to the constraint matrix */
-// 	solver->setRow(numConP - numVars_ + i, elliDim_+1,
-// 		       newRowsub, newRowval);
+//      /* Get the indices for the new variables in the problem */
+//      newRowsub[elliDim_] = numVarP - elliDim_ + i;
+//      /* Get the values of the entries of the new constraints */
+//      for(int j = 0; j < elliDim_; j++) {
+//        indexA = newAslice_ + i + j * numVars_;
+//        newRowval[j] = (fabs(*(indexA)) < ICLEPS)?0.0:*(indexA);
+//      }
+//      /* Add the constraints bounds, i.e the right hand side */
+//      solver->setRowBounds(numConP - numVars_ + i,
+//                           *(newbslice_+i),
+//                           *(newbslice_+i));
+//      /* Add the new row to the constraint matrix */
+//      solver->setRow(numConP - numVars_ + i, elliDim_+1,
+//                     newRowsub, newRowval);
 //       }
 //     }
 //     /* Append the new cone
@@ -713,9 +769,9 @@ void CglConicGD1Cut::regularize() {
 //     int l = 1;
 //     for(int i = 0; i < elliDim_; i ++) {
 //       if ( i != varHead_) {
-// 	csub[l] = numVarP - elliDim_ + i;
-// 	//std::cout<<"csub["<<l<<"] = "<<csub[l]<<"\n";
-// 	l++;
+//      csub[l] = numVarP - elliDim_ + i;
+//      //std::cout<<"csub["<<l<<"] = "<<csub[l]<<"\n";
+//      l++;
 //       }
 //     }
 //     solver->addCone(elliDim_, csub);
@@ -725,6 +781,10 @@ void CglConicGD1Cut::regularize() {
 
 bool CglConicGD1Cut::valid() const {
   return valid_;
+}
+
+bool CglConicGD1Cut::infeasible() const {
+  return infeasible_;
 }
 
 // number of rows of the linear part of the cut
@@ -779,10 +839,10 @@ CglConicGD1Cut::~CglConicGD1Cut() {
     delete[] cmembers_;
   if (cone_members_)
     delete[] cone_members_;
+  if (Jtilde_)
+    delete[] Jtilde_;
   if (vecx0_)
     delete[] vecx0_;
-  if (vecx0J_)
-    delete[] vecx0J_;
   if (matQ_tau_)
     delete[] matQ_tau_;
   if (vecq_tau_)
@@ -922,7 +982,7 @@ static void eigDecompICL(int n, double * L, double * eig) {
 
 // return maximum root of quadratic formula
 static double quad_formula(double quad_term, double lin_term,
-			   double ind_term) {
+                           double ind_term) {
   double root1, root2;
   roots(quad_term, lin_term, ind_term, root1, root2);
   /**
@@ -934,7 +994,7 @@ static double quad_formula(double quad_term, double lin_term,
 
 // compute roots of quadratic formula
 static void roots(double a, double b, double c,
-		  double & root1, double & root2) {
+                  double & root1, double & root2) {
   //Check if it is a linear function
   //Returns the same value in the twoo rots when linear
   if(fabs(a) < EPS) {
@@ -969,3 +1029,55 @@ static void roots(double a, double b, double c,
   }
 }
 
+
+// print matrix, row major 0, col major 1
+void CglConicGD1Cut::print_matrix(int major, int num_rows, int num_cols,
+                                  double const * matrix,
+                                  char const * name) const {
+  std::cout << "==================== "
+            << name
+            << " ===================="
+            << std::endl;
+  for (int i=0; i<num_rows; ++i) {
+    for (int j=0; j<num_cols; ++j) {
+      if (major) {
+        std::cout << matrix[i+j*num_rows] << " ";
+      }
+      else {
+        std::cout << matrix[i*num_cols+j] << " ";
+      }
+    }
+    std::cout << std::endl;
+  }
+}
+
+// print vector
+void CglConicGD1Cut::print_vector(int n, double const * vector,
+                                  char const * name) const {
+  std::cout << "==================== "
+            << name
+            << " ===================="
+            << std::endl;
+  for (int i=0; i<n; ++i) {
+    std::cout << vector[i] << " ";
+  }
+  std::cout << std::endl;
+}
+
+void CglConicGD1Cut::print_scalar(double value, char const * name) const {
+  std::cout << "==================== "
+            << name
+            << " ===================="
+            << std::endl
+            << value
+            << std::endl;
+}
+
+void CglConicGD1Cut::print_cut() const {
+  if (new_matA_==NULL or new_rhs_==NULL) {
+    return;
+  }
+  print_matrix(1, csize_-num_rows_, csize_, new_matA_,
+               "cut coefficient matrix");
+  print_vector(csize_-num_rows_, new_rhs_, "cut rhs");
+}

@@ -98,20 +98,15 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddCuts(
       std::cerr << "Generated cut is not valid." << std::endl;
       delete cut;
     }
-    else {
-      // check cut first
-      OsiConicSolverInterface * nsi = si.clone();
-      add_cut(nsi, cut);
-      nsi->initialSolve();
-      if (!nsi->isProvenOptimal()) {
-        std::cerr << "Problem is not optimal after adding cut!" << std::endl;
-      }
-      else {
-        cuts_.push_back(cut);
-      }
-      delete nsi;
+    else if (cut->infeasible()) {
+      // problem is infeasible
+      std::cout << "Problem is infeasible!"
+                << std::endl;
+      throw std::exception();
     }
-    //add_cut(cut);
+    else {
+      cuts_.push_back(cut);
+    }
     delete[] rows;
   }
   add_cuts(solver);
@@ -163,6 +158,7 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddBestCut(
     }
     CglConicGD1Cut * cut = new CglConicGD1Cut(&si, num_eq_rows, rows,
                                               cut_cone, dis_var);
+    cut->print_cut();
     if(!cut->valid()) {
       std::cerr << "Generated cut is not valid." << std::endl;
       delete cut;
@@ -237,6 +233,11 @@ void CglConicGD1::add_cut(OsiConicSolverInterface * solver,
     std::cerr << "Generated cut is not valid." << std::endl;
     return;
   }
+  else if (cut->valid() && cut->infeasible()) {
+    // cut procedure decided that problem is infeasible.
+    std::cerr << "Problem is infeasible!" << std::endl;
+    throw std::exception();
+  }
   int cut_type = cut->cutType();
   if (cut_type==1)  {
     add_cone_form_cut(solver, cut);
@@ -265,69 +266,54 @@ void CglConicGD1::add_cut(OsiConicSolverInterface * solver,
   }
 }
 
-void CglConicGD1::add_cone_form_cut(OsiConicSolverInterface * solver, CglConicGD1Cut * cut) {
+void CglConicGD1::add_cone_form_cut(OsiConicSolverInterface * solver,
+                                    CglConicGD1Cut * cut) {
   int * members = cut->getMembers();
-  int num_cut_rows = cut->getNumCols();
+  int num_cut_rows = cut->getNumRows();
   // num_cut_rows is same as cut cone size
-  int num_cut_cols = cut->getNumRows();
+  int num_cut_cols = cut->getNumCols();
   double const * newMatA = cut->getNewMatA();
   double const * newRhs =  cut->getNewRhs();
   int num_orig_rows = solver->getNumRows();
   int num_orig_cols = solver->getNumCols();
-  // add Ix + Ay = b and y \in L to the model. x is old variable.
+  // add Ax - y = b and y \in L to the model. x is old variable.
   // y is new variable.
-  // add rows Ix = b first.
-  int * ind = new int[1];
-  double * val = new double[1];
-  val[0] = 1.0;
+  // add rows Ax = b first.
+  double * val = new double[num_cut_cols];
+  // for each row of A
   for (int i=0; i<num_cut_rows; ++i) {
-    ind[0] = members[i];
-    solver->addRow(1, ind ,val, newRhs[i], newRhs[i]);
+    // iterate over columns of A
+    for (int j=0; j<num_cut_cols; ++j) {
+      // A is col ordered
+      val[j] = newMatA[j*num_cut_rows+i];
+    }
+    solver->addRow(num_cut_cols, members, val, newRhs[i], newRhs[i]);
   }
-  delete[] ind;
   delete[] val;
   // add columns Ay to rows Ix = b.
-  ind = new int[num_cut_rows];
-  val = new double[num_cut_rows];
-  int num_elem = 0;
-  double value;
-  for (int i=0; i<num_cut_cols; ++i) {
-    // newMatA is col major
-    for (int j=0; j<num_cut_rows; ++j) {
-      value = newMatA[i*num_cut_rows+j];
-      if (value>EPS || value<-EPS) {
-        ind[num_elem] = num_orig_rows+j;
-        val[num_elem] = value;
-        num_elem++;
-      }
-    }
+  // add columns -y to rows Ax = b.
+  int * ind = new int[1];
+  val = new double[1];
+  val[0] = -1.0;
+  for (int i=0; i<num_cut_rows; ++i) {
+    ind[0] = num_orig_rows+i;
     // add col
-    solver->addCol(num_elem, ind, val, -solver->getInfinity(),
+    solver->addCol(1, ind, val, -solver->getInfinity(),
                     solver->getInfinity(), 0.0);
-    num_elem = 0;
   }
   delete[] ind;
   delete[] val;
   // add cone y in L. Leading variable may not be y_1.
-  if (num_cut_cols==1) {
+  if (num_cut_rows==1) {
     solver->setColLower(num_orig_cols, 0.0);
   }
   else {
-    int * cone_ind = new int[num_cut_cols];
-    int var_head = num_orig_cols + cut->getVarHead();
-    cone_ind[0] = var_head;
-    int k = 1;
-    for (int i=0; i<num_cut_cols; ++i) {
-      if (i==(var_head-num_orig_cols)) {
-        continue;
-      }
-      else {
-        cone_ind[k] = num_orig_cols+i;
-        k++;
-      }
+    int * cone_ind = new int[num_cut_rows];
+    for (int i=0; i<num_cut_rows; ++i) {
+      cone_ind[i] = num_orig_cols+i;
     }
     OsiLorentzConeType type = OSI_QUAD;
-    solver->addConicConstraint(type, num_cut_cols, cone_ind);
+    solver->addConicConstraint(type, num_cut_rows, cone_ind);
     delete[] cone_ind;
   }
 }
