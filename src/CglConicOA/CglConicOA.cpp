@@ -11,6 +11,7 @@
 #include <iomanip>
 #include <cmath>
 #include <numeric>
+#include <limits>
 
 CglConicOA::CglConicOA(double coneTol)
   : param_(0) {
@@ -100,6 +101,20 @@ void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
               << "This should not happen!" << std::endl;
     throw std::exception();
   }
+
+  // check solution
+  for (int i=0; i<n; ++i) {
+    if (sol[i]<-1e30 || sol[i]>1e30) {
+      std::cout << "Very large/small value in solution "
+                << i
+                << " "
+                << sol[i]
+                << std::endl;
+    }
+  }
+
+
+
   // if solve status is dual infeasible (unbounded problem)
   double ** point = new double*[num_points];
   for (int k=0; k<num_points; ++k) {
@@ -546,16 +561,72 @@ void CglConicOA::generate_support_lorentz(int size,
   // todo(aykut) check whether p is 0,
   // the method will return to 0 coef if p is 0.
   double * coef = new double[size];
+  bool need_scaling = false;
+  double scale = 0.0;
   // cone is in canonical form
   for (int j=1; j<size; ++j) {
+    // if point[0] is close to 0.0, then set it 0.0
     if ((point[j]<param_->coneTol()) && (point[j]>-param_->coneTol())) {
       coef[j] = 0.0;
     }
     else {
       coef[j] = 2.0*point[j];
     }
+    // check whether scaling is necessary
+    if (point[j]<-1e80 || point[j]>1e80) {
+      need_scaling = true;
+      if (scale<abs(point[j])) {
+        scale = point[j];
+      }
+    }
   }
   coef[0] = -2.0*point[0];
+  // scale if necessary
+  if (need_scaling) {
+    // print point
+    std::cout << "========== point ==========" << std::endl;
+    for (int j=0; j<size; ++j) {
+      std::cout << point[j] << " ";
+    }
+    std::cout << std::endl;
+    // create new point
+    double * scaled_point = new double[size];
+    // check whether scale is inf
+    if (scale > std::numeric_limits<double>::max() ||
+        scale < std::numeric_limits<double>::min()) {
+      // set all inf to 1, -inf to -1 everything else to 0.0
+      for (int j=0; j<size; ++j) {
+        if (point[j]>1e80) {
+          scaled_point[j] = 1.0;
+        }
+        else if (point[j]<-1e80) {
+          scaled_point[j] = -1.0;
+        }
+        else {
+          scaled_point[j] = 0.0;
+        }
+      }
+    }
+    else {
+      // divide all points by the scale
+      for (int j=0; j<size; ++j) {
+        scaled_point[j] = point[j]/scale;
+      }
+    }
+    std::cout << "scale is " << scale << std::endl;
+    // print scaled point
+    std::cout << "========== scaled point ==========" << std::endl;
+    for (int j=0; j<size; ++j) {
+      std::cout << scaled_point[j] << " ";
+    }
+    std::cout << std::endl;
+    // call this function again with the scaled point
+    //generate_support_lorentz(size, members, scaled_point,rc);
+    delete[] scaled_point;
+    delete[] coef;
+    return;
+    // return
+  }
   // insert constraint (coef,0) to constraint pool
   rc->setRow(size, members, coef);
   // todo(aykut): fix setting infinity
