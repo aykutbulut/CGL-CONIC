@@ -1,4 +1,5 @@
 #include "CglConicGD1Cut.hpp"
+#include <vector>
 
 extern "C" {
   #include <cblas.h>
@@ -187,6 +188,38 @@ void CglConicGD1Cut::classify_quadric() {
     }
   }
   delete [] Qq;
+  // push eigenvalue--eigenvector pairs into vector
+  std::vector<EigenPair*> epair;
+  for (int i=0; i<n; ++i) {
+    EigenPair * curr = new EigenPair();
+    curr->value_ = eigQ_[i];
+    curr->vector_ = matV_ + i*n;
+    epair.push_back(curr);
+  }
+  // sort eigenvalue eigenvector pairs
+  std::sort(epair.begin(), epair.end(), EigenLess());
+
+  // restore eigQ_ and matV_
+  double * newMatV_ = new double[n*n];
+  std::vector<EigenPair*>::const_iterator it;
+  int k=0;
+  for (it=epair.begin(); it!=epair.end(); ++it) {
+    eigQ_[k] = (*it)->value_;
+    std::copy((*it)->vector_, (*it)->vector_+n, newMatV_+k*n);
+    k++;
+  }
+  delete[] matV_;
+  matV_ = newMatV_;
+  newMatV_ = NULL;
+
+  // free epair
+  std::vector<EigenPair*>::iterator iit;
+  for (iit=epair.begin(); iit!=epair.end(); ++iit) {
+    delete *iit;
+  }
+  epair.clear();
+  print_vector(n, eigQ_, "eigQ_");
+  print_matrix(1, n, n, matV_, "matV_");
 }
 
 void CglConicGD1Cut::compute_matrixA() {
@@ -298,13 +331,17 @@ void CglConicGD1Cut::compute_tau() {
   // === Compute disjunction in u-space ===
   // c is the disjunction coefficient, we compute a from c in u-space
 
-  print_matrix(1, m-n, m, matA_, "A");
-  print_matrix(1, m, n, matH_, "H");
-  print_matrix(1, n, n, matQ_, "Q");
-  print_matrix(1, n, n, matV_, "V");
-  print_vector(n, eigQ_, "eigQ");
-  print_vector(n, vecq_, "q");
-  print_scalar(rho_, "rho");
+  //print_matrix(1, m-n, m, matA_, "A");
+  //print_matrix(1, m, n, matH_, "H");
+  //print_matrix(1, n, n, matQ_, "Q");
+  //print_matrix(1, n, n, matV_, "V");
+  //print_vector(n, eigQ_, "eigQ");
+  //print_vector(n, vecq_, "q");
+  //print_scalar(rho_, "rho");
+
+  // Check whether Q is singular
+
+
 
   a_ = new double[n]();
   double const * c = disjunction_->get_c1();
@@ -377,10 +414,13 @@ void CglConicGD1Cut::compute_tau() {
   double quad_coef = (alpha_-beta_)*(alpha_-beta_);
   double norm_q_square = cblas_ddot(m, vecq_, 1, vecq_, 1);
   double aTq = cblas_ddot(m, a_, 1, vecq_, 1);
-  double lin_coef = 4.0*norm_q_square -
-    (alpha_+beta_+2*aTq)*(alpha_+beta_+2*aTq) +
-    (alpha_-beta_)*(alpha_-beta_);
-  double const_term = 4.0*norm_q_square;
+  double lin_coef = 4*(1.0-alpha_*beta_);
+  double const_term = 4.0;
+
+  print_vector(n, vecq_, "q");
+  print_scalar(quad_coef, "quad_coef");
+  print_scalar(lin_coef, "lin_coef");
+  print_scalar(const_term, "const_term");
   if (lin_coef*lin_coef < 4.0*quad_coef*const_term) {
     std::cerr << "Imaginary root!" << std::endl;
     valid_ = false;
@@ -391,7 +431,7 @@ void CglConicGD1Cut::compute_tau() {
     tau_ = quad_formula(quad_coef, lin_coef, const_term);
   }
   print_scalar(tau_, "tau");
-  if (tau_ > -1.3) {
+  if (tau_ > -1.1) {
     valid_ = false;
   }
 }
@@ -509,7 +549,7 @@ void CglConicGD1Cut::compute_new_A() {
   else {
     // Anew is 1/sqrt(q'*q) * W*H'
     new_matA_ = new double[n*m]();
-    cblas_dgemm(CblasColMajor, CblasNoTrans, CblasTrans, n, m, n,
+    cblas_dgemm(CblasColMajor, CblasTrans, CblasTrans, n, m, n,
                 1.0/norm_q, W, n, matH_, m, 0.0, new_matA_, n);
     print_matrix(1, n, m, new_matA_, "Anew");
 
@@ -522,7 +562,7 @@ void CglConicGD1Cut::compute_new_A() {
     // subtract q
     cblas_daxpy(n, -1.0, vecq_, 1, new_rhs_, 1);
     // W(H'x0-q)
-    cblas_dgemv(CblasColMajor, CblasNoTrans, n, n, 1.0, W, n,
+    cblas_dgemv(CblasColMajor, CblasTrans, n, n, 1.0, W, n,
                 new_rhs_, 1,
                 0.0, new_rhs_, 1);
     //print_vector(n, new_rhs_, "W*(H'*x0-q)");
@@ -530,7 +570,7 @@ void CglConicGD1Cut::compute_new_A() {
     cblas_dscal(n, 1.0/norm_q, new_rhs_, 1);
     // add Wwbar
     double * Wwbar = new double[n];
-    cblas_dgemv(CblasColMajor, CblasNoTrans, n, n, 1.0, W, n,
+    cblas_dgemv(CblasColMajor, CblasTrans, n, n, 1.0, W, n,
                 wbar, 1,
                 0.0, Wwbar, 1);
     cblas_daxpy(n, 1.0, Wwbar, 1, new_rhs_, 1);
@@ -548,80 +588,11 @@ void CglConicGD1Cut::compute_new_A() {
     delete[] Wwbar;
   }
 
-  // TODO(AYKUT) EIGENVALUE ORDERING
-
-
   delete[] Vtau;
   delete[] eigQtau;
   delete[] sqrtDtau;
   delete[] W;
   delete[] wbar;
-
-
-  //Initilize the new A matrix section
-  // int m = csize_;
-  // int n = m-num_rows_;
-  // new_matA_ = new double[n*m]();
-  // char jobz = 'V';
-  // char uplo = 'U';
-  // int info = 0;
-  // int lwork = -1;
-  // double worksize[1];
-  // double * L = new double[n*n];
-  // cblas_dcopy(n*n, matQ_tau_, 1, L, 1);
-  // double * d = new double[n];
-  // // eigenvalue decomposition, L holds normalized eigenvectors,
-  // // d holds eigenvalues. Q = L^TDL
-  // dsyev_(&jobz, &uplo, &n, L, &n, d, worksize, &lwork, &info);
-  // lwork = (int) worksize[0];
-  // double * work = new double[lwork];
-  // dsyev_(&jobz, &uplo, &n, L, &n, d, work, &lwork, &info);
-  // if (cut_type_ > 0){
-  //   double * LDinv = new double[n*n]();
-  //   // todo(aykut) why do we need this? we already know the leading
-  //   // variable of the conic constraint.
-  //   varHead_ = -1;
-  //   // the following loop is for computing LD^-1
-  //   for(int i = 0; i < n; i++){
-  //     //printf("d[%d] = %f\n", i, d[i]);
-  //     std::cout << "d[" << i << "] " << d[i] << std::endl;
-  //     if(fabs(d[i]) < 1e-2){
-  //       valid_ = false;
-  //     }
-  //     if (d[i] < 0.0){
-  //       //printf("head var = %d\n", i);
-  //       varHead_ = i;
-  //       cblas_daxpy(n, 1.0/sqrt(fabs(d[i])), L+n*i, 1, LDinv+n*i, 1);
-  //       dirTestU_ = new double[n]();
-  //       cblas_dcopy(n, L+n*i, 1, dirTestU_, 1);
-  //     }
-  //     else {
-  //       cblas_daxpy(n, 1/sqrt(d[i]), L+n*i, 1, LDinv + n*i, 1);
-  //     }
-  //   }
-  //   cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, csize_, n,
-  //               n, -1.0, matH_, csize_, LDinv, n, 0.0, new_matA_, csize_);
-  // }
-  // else {
-  //   varHead_ = -1;
-  //   for(int i=0; i<n; i++) {
-  //     if(fabs(d[i]) < 1e-2){
-  //       valid_ = false;
-  //     }
-  //     if (d[i] < -EPS) {
-  //       varHead_ = i;
-  //       cblas_daxpy(n, sqrt(fabs(d[i])), L+n*i, 1, new_matA_+i, n);
-  //       dirTestU_ = new double[n]();
-  //       cblas_dcopy(n, L+n*i, 1, dirTestU_, 1);
-  //     }
-  //     else {
-  //       cblas_daxpy(n, sqrt(d[i]), L+n*i, 1, new_matA_+i, n);
-  //     }
-  //   }
-  // }
-  // delete[] work;
-  // delete[] L;
-  // delete[] d;
 }
 
 // compute right-hand-side that corresponds to NewA

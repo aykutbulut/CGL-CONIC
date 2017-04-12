@@ -248,3 +248,16 @@ public:
   void print_cut() const;
   ~CglConicGD1Cut();
 };
+
+// define struct for eigenvalue--eigenvector pair
+struct EigenPair {
+  double value_;
+  double * vector_;
+};
+
+// create function object to help sorting
+struct EigenLess {
+  bool operator()(EigenPair const * a, EigenPair const * b) {
+    return a->value_ < b->value_;
+  }
+};
