@@ -576,7 +576,8 @@ void CglConicOA::generate_support_lorentz(int size,
     if (point[j]<-1e80 || point[j]>1e80) {
       need_scaling = true;
       if (scale<abs(point[j])) {
-        scale = point[j];
+        //todo(aykut) what if scale is inf?
+        scale = abs(point[j]);
       }
     }
   }
@@ -584,11 +585,11 @@ void CglConicOA::generate_support_lorentz(int size,
   // scale if necessary
   if (need_scaling) {
     // print point
-    std::cout << "========== point ==========" << std::endl;
-    for (int j=0; j<size; ++j) {
-      std::cout << point[j] << " ";
-    }
-    std::cout << std::endl;
+    // std::cout << "========== point ==========" << std::endl;
+    // for (int j=0; j<size; ++j) {
+    //   std::cout << point[j] << " ";
+    // }
+    // std::cout << std::endl;
     // create new point
     double * scaled_point = new double[size];
     // check whether scale is inf
@@ -613,15 +614,15 @@ void CglConicOA::generate_support_lorentz(int size,
         scaled_point[j] = point[j]/scale;
       }
     }
-    std::cout << "scale is " << scale << std::endl;
+    // std::cout << "scale is " << scale << std::endl;
     // print scaled point
-    std::cout << "========== scaled point ==========" << std::endl;
-    for (int j=0; j<size; ++j) {
-      std::cout << scaled_point[j] << " ";
-    }
-    std::cout << std::endl;
+    // std::cout << "========== scaled point ==========" << std::endl;
+    // for (int j=0; j<size; ++j) {
+    //   std::cout << scaled_point[j] << " ";
+    // }
+    // std::cout << std::endl;
     // call this function again with the scaled point
-    //generate_support_lorentz(size, members, scaled_point,rc);
+    generate_support_lorentz(size, members, scaled_point, rc);
     delete[] scaled_point;
     delete[] coef;
     return;
