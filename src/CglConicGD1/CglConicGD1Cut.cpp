@@ -53,6 +53,7 @@ CglConicGD1Cut::CglConicGD1Cut(OsiConicSolverInterface const * solver,
   vecq_ = 0;
   eigQ_ = 0;
   vecx0_ = 0;
+  a_ = 0;
   cmembers_ = 0;
   cone_members_ = 0;
   Jtilde_ = 0;
@@ -805,6 +806,9 @@ CglConicGD1Cut::~CglConicGD1Cut() {
   }
   if (eigQ_) {
     delete[] eigQ_;
+  }
+  if (a_) {
+    delete[] a_;
   }
   if (cmembers_)
     delete[] cmembers_;
