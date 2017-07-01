@@ -218,8 +218,8 @@ void CglConicGD1Cut::classify_quadric() {
     delete *iit;
   }
   epair.clear();
-  print_vector(n, eigQ_, "eigQ_");
-  print_matrix(1, n, n, matV_, "matV_");
+  //print_vector(n, eigQ_, "eigQ_");
+  //print_matrix(1, n, n, matV_, "matV_");
 }
 
 void CglConicGD1Cut::compute_matrixA() {
@@ -326,7 +326,7 @@ void CglConicGD1Cut::compute_tau() {
   int m = csize_;
   int n = csize_-num_rows_;
 
-  print_vector(csize_, vecx0_, "x0");
+  //print_vector(csize_, vecx0_, "x0");
 
   // === Compute disjunction in u-space ===
   // c is the disjunction coefficient, we compute a from c in u-space
@@ -351,7 +351,7 @@ void CglConicGD1Cut::compute_tau() {
   // normalize a
   double norm_of_a = cblas_dnrm2(n, a_, 1);
   cblas_dscal(n, 1.0/norm_of_a, a_, 1);
-  print_vector(n, a_, "normalized a");
+  //print_vector(n, a_, "normalized a");
 
   // compute alpha_ and beta_ in regularized space
   {
@@ -359,15 +359,15 @@ void CglConicGD1Cut::compute_tau() {
     double * Hq = new double[m]();
     cblas_dgemv(CblasColMajor, CblasNoTrans, m, n, 1.0,
                 matH_, m, vecq_, 1, 0.0, Hq, 1);
-    print_vector(m, Hq, "Hq");
+    //print_vector(m, Hq, "Hq");
     double cTHq = Hq[rel_dis_var_];
     alpha_ = floor(vecx0_[rel_dis_var_]) - cTx0 + cTHq;
     alpha_ = alpha_/norm_of_a;
     beta_ = ceil(vecx0_[rel_dis_var_]) - cTx0 + cTHq;
     beta_ = beta_/norm_of_a;
     delete[] Hq;
-    print_scalar(alpha_, "alpha normalized");
-    print_scalar(beta_, "beta normalized");
+    //print_scalar(alpha_, "alpha normalized");
+    //print_scalar(beta_, "beta normalized");
   }
 
   // == check whether the disjunctive hyperplane (transfered into the
@@ -417,10 +417,10 @@ void CglConicGD1Cut::compute_tau() {
   double lin_coef = 4*(1.0-alpha_*beta_);
   double const_term = 4.0;
 
-  print_vector(n, vecq_, "q");
-  print_scalar(quad_coef, "quad_coef");
-  print_scalar(lin_coef, "lin_coef");
-  print_scalar(const_term, "const_term");
+  //print_vector(n, vecq_, "q");
+  //print_scalar(quad_coef, "quad_coef");
+  //print_scalar(lin_coef, "lin_coef");
+  //print_scalar(const_term, "const_term");
   if (lin_coef*lin_coef < 4.0*quad_coef*const_term) {
     std::cerr << "Imaginary root!" << std::endl;
     valid_ = false;
@@ -430,7 +430,7 @@ void CglConicGD1Cut::compute_tau() {
     // not happen if quadric intersects with disjunction hyperplanes
     tau_ = quad_formula(quad_coef, lin_coef, const_term);
   }
-  print_scalar(tau_, "tau");
+  //print_scalar(tau_, "tau");
   if (tau_ > -1.1) {
     valid_ = false;
   }
@@ -439,7 +439,7 @@ void CglConicGD1Cut::compute_tau() {
 // compute rho(tau), rho_tau_
 void CglConicGD1Cut::compute_rho_tau() {
   rho_tau_ += tau_*alpha_*beta_;
-  print_scalar(rho_tau_, "rho_tau");
+  //print_scalar(rho_tau_, "rho_tau");
 }
 
  // compute q(tau), q_tau_
@@ -449,7 +449,7 @@ void CglConicGD1Cut::compute_q_tau() {
   std::copy(vecq_, vecq_+n, vecq_tau_);
   double aux = -0.5*tau_*(alpha_ + beta_);
   cblas_daxpy(n, aux, a_, 1, vecq_tau_, 1);
-  print_vector(n, vecq_tau_, "q(tau)");
+  //print_vector(n, vecq_tau_, "q(tau)");
 }
 
  // compute Q(tau), Q_tau_
@@ -468,7 +468,7 @@ void CglConicGD1Cut::compute_Q_tau() {
       matQ_tau_[j*n+i] = matQ_tau_[i*n+j];
     }
   }
-  print_matrix(1, n, n, matQ_tau_, "Q(tau)");
+  //print_matrix(1, n, n, matQ_tau_, "Q(tau)");
 }
 
 // compute matrix as a part of the cut to add to model
@@ -480,8 +480,8 @@ void CglConicGD1Cut::compute_new_A() {
   cblas_dcopy(n*n, matQ_tau_, 1, Vtau, 1);
   double * eigQtau = new double[n]();
   eigDecompICL(n, Vtau, eigQtau);
-  print_matrix(1, n, n, Vtau, "V(tau)");
-  print_vector(n, eigQtau, "eig Q(tau)");
+  //print_matrix(1, n, n, Vtau, "V(tau)");
+  //print_vector(n, eigQtau, "eig Q(tau)");
   // check whether any of the eigenvalues are zero.
   for (int i=0; i<n; ++i) {
     if (eigQtau[i]<0.001 && eigQtau[i]>-0.001) {
@@ -515,13 +515,13 @@ void CglConicGD1Cut::compute_new_A() {
   for (int i=0; i<n; ++i) {
     sqrtDtau[i*n+i] = sqrt(fabs(eigQtau[i]));
   }
-  print_matrix(1, n, n, sqrtDtau, "sqrtDtau");
+  //print_matrix(1, n, n, sqrtDtau, "sqrtDtau");
 
   // compute W
   double * W = new double[n*n];
   cblas_dgemm(CblasColMajor, CblasNoTrans, CblasNoTrans, n, n,
               n, 1.0, Vtau, n, sqrtDtau, n, 0.0, W, n);
-  print_matrix(1, n, n, W, "W");
+  //print_matrix(1, n, n, W, "W");
 
   // compute wbar
   double * wbar = new double[n]();
@@ -529,7 +529,7 @@ void CglConicGD1Cut::compute_new_A() {
   for (int i=0; i<n; ++i) {
     wbar[i] = -wbar[i];
   }
-  print_vector(n, wbar, "wbar");
+  //print_vector(n, wbar, "wbar");
 
 
   // TODO(AYKUT) CAN WE REMOVE THIS SCALING
@@ -551,7 +551,7 @@ void CglConicGD1Cut::compute_new_A() {
     new_matA_ = new double[n*m]();
     cblas_dgemm(CblasColMajor, CblasTrans, CblasTrans, n, m, n,
                 1.0/norm_q, W, n, matH_, m, 0.0, new_matA_, n);
-    print_matrix(1, n, m, new_matA_, "Anew");
+    //print_matrix(1, n, m, new_matA_, "Anew");
 
     new_rhs_ = new double[n]();
     // bnew is coef*W*(H'*x0 - q) + W * wbar
@@ -574,7 +574,7 @@ void CglConicGD1Cut::compute_new_A() {
                 wbar, 1,
                 0.0, Wwbar, 1);
     cblas_daxpy(n, 1.0, Wwbar, 1, new_rhs_, 1);
-    print_vector(n, new_rhs_, "bnew");
+    //print_vector(n, new_rhs_, "bnew");
 
     // negate first row of A and rhs[0] if -W(:,1)'*wbar is less than 0.0
     if (Wwbar[0]>0) {

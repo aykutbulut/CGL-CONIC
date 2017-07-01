@@ -63,6 +63,7 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddCuts(
                                      const CglTreeInfo info) {
   // create a copy of the input
   OsiConicSolverInterface * solver = si.clone();
+  solver->setHintParam(OsiDoReducePrint, true, OsiHintTry);
   // decide disjunction var and cut cone
   std::vector<std::pair<int,int> > candidates;
   candidates = compute_dis_var_cone(si);
@@ -142,6 +143,7 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddBestCut(
   // check which (var,cone) pair is the best
   for (it=candidates.begin(); it!=candidates.end(); it++) {
     OsiConicSolverInterface * solver = si.clone();
+    solver->setHintParam(OsiDoReducePrint, true, OsiHintTry);
     int dis_var = it->first;
     int cut_cone = it->second;
     std::cout << "Checking cut using var " << dis_var
@@ -158,7 +160,7 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddBestCut(
     }
     CglConicGD1Cut * cut = new CglConicGD1Cut(&si, num_eq_rows, rows,
                                               cut_cone, dis_var);
-    cut->print_cut();
+    //cut->print_cut();
     if(!cut->valid()) {
       std::cerr << "Generated cut is not valid." << std::endl;
       delete cut;
@@ -171,13 +173,13 @@ OsiConicSolverInterface * CglConicGD1::generateAndAddBestCut(
         std::cerr << "Solver status is not optimal!" << std::endl;
         continue;
       }
-      std::cout << solver->isAbandoned() << std::endl;
-      std::cout << solver->isProvenOptimal() << std::endl;
-      std::cout << solver->isProvenPrimalInfeasible() << std::endl;
-      std::cout << solver->isProvenDualInfeasible() << std::endl;
-      std::cout << solver->isPrimalObjectiveLimitReached() << std::endl;
-      std::cout << solver->isDualObjectiveLimitReached() << std::endl;
-      std::cout << solver->isIterationLimitReached() << std::endl;
+      // std::cout << solver->isAbandoned() << std::endl;
+      // std::cout << solver->isProvenOptimal() << std::endl;
+      // std::cout << solver->isProvenPrimalInfeasible() << std::endl;
+      // std::cout << solver->isProvenDualInfeasible() << std::endl;
+      // std::cout << solver->isPrimalObjectiveLimitReached() << std::endl;
+      // std::cout << solver->isDualObjectiveLimitReached() << std::endl;
+      // std::cout << solver->isIterationLimitReached() << std::endl;
 
       double obj = solver->getObjValue();
       double imp = obj-initial_obj;
