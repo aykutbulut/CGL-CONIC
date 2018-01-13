@@ -16,6 +16,7 @@
 #include <iostream>
 #include <string>
 #include <cassert>
+#include <sstream>
 // CoinUtils headers
 #include <CoinError.hpp>
 #include <CoinWarmStartBasis.hpp>
@@ -61,6 +62,8 @@ using std::string;
 int main(int argc, const char *argv[]) {
   // If no parms specified then use these
   string mpsFileName = argv[1];
+  string baseName = mpsFileName.substr(mpsFileName.rfind("/")+1,
+        mpsFileName.rfind(".")-mpsFileName.rfind("/")-1);
   try {
     // Instantiate a specific solver interface
     //OsiConicSolverInterface * si = new ColaModel();
@@ -84,13 +87,20 @@ int main(int argc, const char *argv[]) {
     do {
       // Get current solution value
       obj = si->getObjValue();
+      std::cout << "Obj value is " << obj << std::endl;
       // Generate and apply cuts
+      //OsiConicSolverInterface * nsi = cg.generateAndAddBestCut(*si);
       OsiConicSolverInterface * nsi = cg.generateAndAddCuts(*si);
       delete si;
       si = nsi;
-      //si->writeMps("after_cut");
+      std::stringstream msg_stream;
+      //msg_stream << baseName << "dc" << cg.getNumCutsAdded();
+      msg_stream << baseName;
+      si->writeMps(msg_stream.str().c_str());
+      msg_stream.str();
       si->resolve();
       equalObj = eq(si->getObjValue(), obj);
+      break;
     } while (!equalObj);
     // double const * sol = si->getColSolution();
     // Print total number of cuts applied,
@@ -105,6 +115,8 @@ int main(int argc, const char *argv[]) {
     cout << "----------------------------------------------------------"
          <<endl;
     cout <<endl <<endl;
+    // write mps file
+    si->writeMps("after_cuts", "mps", 0.0);
   delete si;
   }
   catch (CoinError e) {

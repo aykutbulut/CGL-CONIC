@@ -124,6 +124,7 @@ CYGPATH_W = @CYGPATH_W@
 # Here we list all possible generated objects or executables to delete them
 CLEANFILES = \
 	gd1.@OBJEXT@ gd1@EXEEXT@ \
+	dual.@OBJEXT@ dual@EXEEXT@ \
 	bental.@OBJEXT@ bental@EXEEXT@ \
 	milp_cuts.@OBJEXT@ milp_cuts@EXEEXT@ \
 	canonical.@OBJEXT@ canonical@EXEEXT@ \

@@ -13,6 +13,7 @@
 
 #ifndef CglConicGD1_H
 #define CglConicGD1_H
+
 // CCGL headers
 #include "CglConicGD1Param.hpp"
 #include "CglConicCutGenerator.hpp"
@@ -20,16 +21,18 @@
 // STDLIB headers
 #include <string>
 
-// generates and adds cuts to solver_
+/// generates and adds cuts to solver_
 class CglConicGD1: public CglConicCutGenerator {
   CglConicGD1Param * param_;
+  CglConicGD1Cut * ccut_;
   int num_cuts_;
   std::vector<CglConicGD1Cut*> cuts_;
+  std::vector<int> cuts_cone_ind_;
   // get equality constraints the cut cone members are in
   // get Ax=b
   void get_rows(OsiConicSolverInterface const & si,
                 int cut_cone, int & num_eq_rows, int *& rows) const;
-  void add_cut(OsiConicSolverInterface * solver, CglConicGD1Cut * cut);
+  void add_cut(OsiConicSolverInterface * solver, CglConicGD1Cut const * cut);
   // adds generated cuts to the model.
   void add_cuts(OsiConicSolverInterface * solver);
   // frees memory
@@ -37,9 +40,20 @@ class CglConicGD1: public CglConicCutGenerator {
   // compute disjunction var and the cone var is in.
   std::vector<std::pair<int, int> > compute_dis_var_cone(
                                     OsiConicSolverInterface const & si) const;
-  void add_cone_form_cut(OsiConicSolverInterface * solver,
-                         CglConicGD1Cut * cut);
-  void print_cut(CglConicGD1Cut * cut) const;
+  void add_cone_from_cut(OsiConicSolverInterface & solver,
+                         CglConicGD1Cut const * cut,
+                         int cut_cone_index);
+  void print_cut(CglConicGD1Cut const * cut) const;
+  void get_input_set(OsiConicSolverInterface const * solver,
+                     int dis_var,
+                     int cut_cone,
+                     int num_eq_rows,
+                     int const * rows,
+                     CoinPackedMatrix *& A,
+                     double *& b,
+                     double *& sol,
+                     int & rel_dis_var) const;
+
 public:
   // default constructor
   CglConicGD1(OsiConicSolverInterface * solver);
@@ -63,12 +77,21 @@ public:
   virtual CglConicCutGenerator * clone() const;
   /// Create C++ lines to get to current state
   virtual std::string generateCpp( FILE * fp);
-  // generate and add cuts, return conic interface
+  // generate and add cuts, return conic interface, primal form
   OsiConicSolverInterface * generateAndAddCuts(OsiConicSolverInterface const & si,
                                     const CglTreeInfo info = CglTreeInfo());
   OsiConicSolverInterface * generateAndAddBestCut(
                                     OsiConicSolverInterface const & si,
                                     const CglTreeInfo info = CglTreeInfo());
+  // generate and add cuts, return conic interface, dual form
+  OsiConicSolverInterface * generateAndAddCuts(
+                              OsiConicSolverInterface const & si,
+                              std::vector<CoinPackedMatrix const *> AA,
+                              std::vector<double const *> bb);
+  OsiConicSolverInterface * generateAndAddBestCut(
+                              OsiConicSolverInterface const & si,
+                              std::vector<CoinPackedMatrix const *> AA,
+                              std::vector<double const *> bb);
   int getNumCutsAdded() const;
 };
 
