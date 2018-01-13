@@ -103,15 +103,15 @@ void CglConicOA::generateCuts(OsiSolverInterface const & si, OsiCuts & cuts,
   }
 
   // check solution
-  for (int i=0; i<n; ++i) {
-    if (sol[i]<-1e30 || sol[i]>1e30) {
-      std::cout << "Very large/small value in solution "
-                << i
-                << " "
-                << sol[i]
-                << std::endl;
-    }
-  }
+  // for (int i=0; i<n; ++i) {
+  //   if (sol[i]<-1e30 || sol[i]>1e30) {
+  //     std::cout << "Very large/small value in solution "
+  //               << i
+  //               << " "
+  //               << sol[i]
+  //               << std::endl;
+  //   }
+  // }
 
 
 
