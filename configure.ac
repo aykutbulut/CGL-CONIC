@@ -55,6 +55,9 @@ AC_COIN_DEBUG_COMPILE(CglConic)
 AC_COIN_PROG_CXX
 AC_LANG_PUSH(C++)
 
+# Get the name of the Fortran compiler and appropriate compiler options
+AC_COIN_PROG_F77
+
 # Initialize automake and libtool
 AC_COIN_INIT_AUTO_TOOLS
 
