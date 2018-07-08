@@ -93,9 +93,6 @@ if test $coin_has_osiconic != yes ; then
 fi
 
 AC_COIN_CHECK_PACKAGE(Cola, [cola], [CglConicLib])
-if test $coin_has_cola != yes ; then
-  AC_MSG_ERROR([Required package Cola is not available.])
-fi
 
 AC_COIN_CHECK_PACKAGE(OsiIpopt, [osiipopt], [CglConicLib])
 if test $coin_has_osiipopt != yes ; then
