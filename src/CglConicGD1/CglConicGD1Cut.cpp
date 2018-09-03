@@ -1,28 +1,30 @@
+#include "CglConicConfig.h"
 #include "CglConicGD1Cut.hpp"
 #include <vector>
 #include <numeric>
 
 extern "C" {
   // blas routines
-  void dcopy_(int*, double*, int*, double*, int*);
-  void dgemv_(char*, int*, int*, double*, double*, int*, double*, int*,
+  void F77_FUNC(dcopy,DCOPY)(int*, double*, int*, double*, int*);
+  void F77_FUNC(dgemv,DGEMV)(char*, int*, int*, double*, double*, int*, double*, int*,
               double*, double*, int*);
-  void dgemm_(char*, char*, int*, int*, int*, double*, double*, int*,
+  void F77_FUNC(dgemm,DGEMM)(char*, char*, int*, int*, int*, double*, double*, int*,
               double*, int*, double*, double*, int*);
-  void dsyrk_(char*, char*, int*, int*, double*, double*, int*, double*,
+
+  void F77_FUNC(dsyrk,DSYRK)(char*, char*, int*, int*, double*, double*, int*, double*,
               double*, int*);
-  void dsyr_(char*, int*, double*, double*, int*, double*, int*);
-  double ddot_(int*, double*, int*, double*, int*);
-  void daxpy_(int*, double*, double*, int*, double*, int*);
+  void F77_FUNC(dsyr,DSYR)(char*, int*, double*, double*, int*, double*, int*);
+  double F77_FUNC(ddot,DDOT)(int*, double*, int*, double*, int*);
+  void F77_FUNC(daxpy,DAXPY)(int*, double*, double*, int*, double*, int*);
 
   // lapack routines
-  void dsysv_(char *uplo, int *n, int *nrhs, double *a,
+  void F77_FUNC(dsysv,DSYSV)(char *uplo, int *n, int *nrhs, double *a,
               int *lda, int * ipiv, double *b, int * ldb,
               double * work, int *lwork, int * info);
-  void dsyev_(char *jobz, char *uplo, int *n, double *a,
+  void F77_FUNC(dsyev,DSYEV)(char *jobz, char *uplo, int *n, double *a,
               int *lda, double *w, double *work, int *lwork,
               int *info);
-  void dgesvd_(char *jobu, char *jobvt, int *m, int *n,
+  void F77_FUNC(dgesvd,DGESVD)(char *jobu, char *jobvt, int *m, int *n,
                double *a, int *lda, double *S, double *U,
                int *ldu, double *vt, int *ldvt, double *work,
                int *lwork, int *info);
@@ -150,14 +152,14 @@ void CglConicGD1Cut::compute_matrixH() {
   double * tempA = new double[num_cols*num_rows];
   int blas_nm = num_cols*num_rows;
   int blas_one = 1;
-  dcopy_(&blas_nm, matA_, &blas_one, tempA, &blas_one);
+  F77_FUNC(dcopy,DCOPY)(&blas_nm, matA_, &blas_one, tempA, &blas_one);
   // right hand side singular vectors of A
   double * VT = new double[num_cols*num_cols];
   svDecompICL(num_rows, num_cols, tempA, VT);
   matH_ = new double[(num_cols-num_rows)*num_cols]();
   // Take the last n-m columns of V, lapack returns V^T
   for(int i=0; i<(num_cols-num_rows); ++i) {
-    dcopy_(&num_cols, (VT+num_rows+i), &num_cols, (matH_+i*num_cols), &blas_one);
+    F77_FUNC(dcopy,DCOPY)(&num_cols, (VT+num_rows+i), &num_cols, (matH_+i*num_cols), &blas_one);
   }
   delete[] tempA;
   delete[] VT;
@@ -190,22 +192,21 @@ void CglConicGD1Cut::compute_matrixQ() {
   double * d = new double[n];
   int blas_one = 1;
   int blas_mm1 = m-1;
-  dcopy_(&n, matH_, &m, d, &blas_one);
+  F77_FUNC(dcopy,DCOPY)(&n, matH_, &m, d, &blas_one);
   // Temporary array, exlcudes the first row of H
   double * A = new double[(m-1)*n];
   for(int i=0; i<n; i++) {
-    dcopy_(&blas_mm1, matH_+i*m+1, &blas_one, A+i*(m-1), &blas_one);
+    F77_FUNC(dcopy,DCOPY)(&blas_mm1, matH_+i*m+1, &blas_one, A+i*(m-1), &blas_one);
   }
   // computes Q = A^TA - dd^T =  H^T J H
   char blas_type_c = 'C';
-  char blas_type_n = 'N';
   char blas_upper = 'U';
   double blas_double_one = 1.0;
   double blas_double_neg_one = -1.0;
   double blas_zero = 0.0;
-  dsyrk_(&blas_upper, &blas_type_c, &n, &blas_mm1,
+  F77_FUNC(dsyrk,DSYRK)(&blas_upper, &blas_type_c, &n, &blas_mm1,
               &blas_double_one, A, &blas_mm1, &blas_zero, matQ_, &n);
-  dsyr_(&blas_upper, &n, &blas_double_neg_one, d,
+  F77_FUNC(dsyr,DSYR)(&blas_upper, &n, &blas_double_neg_one, d,
         &blas_one, matQ_, &n);
   delete[] d;
   delete[] A;
@@ -236,7 +237,7 @@ void CglConicGD1Cut::compute_vectorq() {
   double blas_double_one = 1.0;
   int blas_one = 1;
   double blas_zero = 0.0;
-  dgemv_(&blas_type_c, &m, &n, &blas_double_one, matH_, &m,
+  F77_FUNC(dgemv,DGEMV)(&blas_type_c, &m, &n, &blas_double_one, matH_, &m,
                vecx0_, &blas_one, &blas_zero, vecq_, &blas_one);
   // reverse negation of x0[0]
   vecx0_[0] = -1.0*vecx0_[0];
@@ -254,7 +255,7 @@ void CglConicGD1Cut::compute_rho() {
   rho_ = - (vecx0_[0]*vecx0_[0]);
   int blas_mm1 = m-1;
   int blas_one = 1;
-  rho_ += ddot_(&blas_mm1, vecx0_+1, &blas_one, vecx0_+1, &blas_one);
+  rho_ += F77_FUNC(ddot,DDOT)(&blas_mm1, vecx0_+1, &blas_one, vecx0_+1, &blas_one);
   //print_scalar(rho_, "rho");
 }
 
@@ -273,7 +274,7 @@ void CglConicGD1Cut::decompose_matrixQ() {
   matV_ = new double[n*n];
   int blas_one = 1;
   int blas_n_sqr = n*n;
-  dcopy_(&blas_n_sqr, matQ_, &blas_one, matV_, &blas_one);
+  F77_FUNC(dcopy,DCOPY)(&blas_n_sqr, matQ_, &blas_one, matV_, &blas_one);
   // vector with the eigenvalues of Q
   matD_ = new double[n]();
   // compute the eigenvalue decomposition
@@ -453,7 +454,7 @@ void CglConicGD1Cut::compute_tau() {
   double blas_double_one = 1.0;
   int blas_one = 1;
   double blas_zero = 0.0;
-  dgemv_(&blas_type_c, &n, &n, &blas_double_one,
+  F77_FUNC(dgemv,DGEMV)(&blas_type_c, &n, &n, &blas_double_one,
               matV_, &n, dis_coef, &blas_one, &blas_zero, dis_coef, &blas_one);
 
   // (5) compute term1 a^\top H V D^{-1/2}, elementwise vector vector multip
@@ -588,7 +589,7 @@ void CglConicGD1Cut::compute_q_tau() {
   std::copy(vecq_, vecq_+n, vecq_tau_);
   double aux = -0.5*tau_*(alpha_in_w_ + beta_in_w_);
   int blas_one = 1;
-  daxpy_(&n, &aux, dis_coef_in_w_, &blas_one, vecq_tau_, &blas_one);
+  F77_FUNC(daxpy,DAXPY)(&n, &aux, dis_coef_in_w_, &blas_one, vecq_tau_, &blas_one);
   //print_vector(n, vecq_tau_, "q(tau)");
 }
 
@@ -609,9 +610,9 @@ void CglConicGD1Cut::compute_Q_tau() {
   matQ_tau_ = new double[n*n];
   int blas_n_sqr = n*n;
   int blas_one = 1;
-  dcopy_(&blas_n_sqr, matQ_, &blas_one, matQ_tau_, &blas_one);
+  F77_FUNC(dcopy,DCOPY)(&blas_n_sqr, matQ_, &blas_one, matQ_tau_, &blas_one);
   char blas_upper = 'U';
-  dsyr_(&blas_upper, &n, &tau_, dis_coef_in_w_, &blas_one,
+  F77_FUNC(dsyr,DSYR)(&blas_upper, &n, &tau_, dis_coef_in_w_, &blas_one,
              matQ_tau_, &n);
   // copy upper triangular to lower triangular part
   // for each column
@@ -639,7 +640,7 @@ void CglConicGD1Cut::decompose_matrixQtau() {
   matV_tau_ = new double[n*n];
   int blas_n_sqr = n*n;
   int blas_one = 1;
-  dcopy_(&blas_n_sqr, matQ_tau_, &blas_one, matV_tau_, &blas_one);
+  F77_FUNC(dcopy,DCOPY)(&blas_n_sqr, matQ_tau_, &blas_one, matV_tau_, &blas_one);
   // vector with the eigenvalues of Q
   matD_tau_ = new double[n]();
   // compute the eigenvalue decomposition
@@ -738,26 +739,26 @@ void CglConicGD1Cut::compute_cut() {
   double blas_double_neg_one = -1.0;
   int blas_one = 1;
   double blas_zero = 0.0;
-  dgemm_(&blas_type_c, &blas_type_c, &n, &n, &n, &blas_double_one, matV_tau_,
+  F77_FUNC(dgemm,DGEMM)(&blas_type_c, &blas_type_c, &n, &n, &n, &blas_double_one, matV_tau_,
               &n, sqrtDtau, &n, &blas_zero, sqrtQtau, &n);
 
   // compute cutA
   if (input_type_ == PRIMAL_FORM) {
     cutA_ = new double[n*m];
     // multiply with H^\top
-    dgemm_(&blas_type_c, &blas_type_c, &n, &m, &n,
+    F77_FUNC(dgemm,DGEMM)(&blas_type_c, &blas_type_c, &n, &m, &n,
                 &blas_double_one, sqrtQtau, &n, matH_, &m, &blas_zero, cutA_, &n);
     // cutb is cutA x^0 - sqrtQtau wbar_tau
 
     // print_matrix(1, n, n, sqrtQtau, "sqrtQtau");
 
     cutb_ = new double[n]();
-    dgemv_(&blas_type_n, &n, &m, &blas_double_one,
+    F77_FUNC(dgemv,DGEMV)(&blas_type_n, &n, &m, &blas_double_one,
            cutA_, &n, vecx0_, &blas_one, &blas_zero, cutb_, &blas_one);
 
     // print_vector(n, cutb_, "cutA x0");
 
-    dgemv_(&blas_type_n, &n, &n, &blas_double_neg_one,
+    F77_FUNC(dgemv,DGEMV)(&blas_type_n, &n, &n, &blas_double_neg_one,
            sqrtQtau, &n, wbar_tau_, &blas_one, &blas_double_one,
            cutb_, &blas_one);
 
@@ -903,14 +904,14 @@ static void svDecompICL(int m, int n, double * A, double * VT){
   int info = 0;
   //  printf("fails Singular query\n");
   // Query what is the optimal size for the computation of the singular values
-  dgesvd_(&jobu, &jobvt, &m, &n, A, &lda, s, u, &ldu,
+  F77_FUNC(dgesvd,DGESVD)(&jobu, &jobvt, &m, &n, A, &lda, s, u, &ldu,
           VT, &ldvt, &worksize, &lwork, &info);
   // Initilize the working space needed by lapack
   lwork = (int) worksize;
   double * work = (double *) malloc(lwork*sizeof(double));
   //   printf("fails Singular computing\n");
   // Here is where the actually computation is happening
-  dgesvd_(&jobu, &jobvt, &m, &n, A, &lda, s, u, &ldu,
+  F77_FUNC(dgesvd,DGESVD)(&jobu, &jobvt, &m, &n, A, &lda, s, u, &ldu,
           VT, &ldvt, work, &lwork, &info);
   free(work);
   free(s);
@@ -929,11 +930,11 @@ static void solveSM(int n, double *A, double *b, double *x) {
   double worksize = 0.0;
   int lwork = -1;
   int info;
-  dsysv_(&uplo, &n, &nrhs, copyA, &n, ipiv, x, &n,
+  F77_FUNC(dsysv,DSYSV)(&uplo, &n, &nrhs, copyA, &n, ipiv, x, &n,
          &worksize, &lwork, &info);
   lwork = (int) worksize;
   double * work = new double[lwork];
-  dsysv_(&uplo, &n, &nrhs, copyA, &n, ipiv, x, &n,
+  F77_FUNC(dsysv,DSYSV)(&uplo, &n, &nrhs, copyA, &n, ipiv, x, &n,
          work, &lwork, &info);
   delete[] work;
   delete[] ipiv;
@@ -947,10 +948,10 @@ static void eigDecompICL(int n, double * L, double * eig) {
   int info = 0;
   int lwork = -1;
   double worksize[1];
-  dsyev_(&jobz, &uplo, &n, L, &n, eig, worksize, &lwork, &info);
+  F77_FUNC(dsyev,DSYEV)(&jobz, &uplo, &n, L, &n, eig, worksize, &lwork, &info);
   lwork = (int) worksize[0];
   double * work = new double[lwork];
-  dsyev_(&jobz, &uplo, &n, L, &n, eig, work, &lwork, &info);
+  F77_FUNC(dsyev,DSYEV)(&jobz, &uplo, &n, L, &n, eig, work, &lwork, &info);
   delete[] work;
 }
 

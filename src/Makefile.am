@@ -19,8 +19,12 @@ lib_LTLIBRARIES = libCglConic.la
 
 # List all source files for this library, including headers
 libCglConic_la_SOURCES = \
-	CglConicCutGenerator.cpp CglConicCutGenerator.hpp\
-	CglConicParam.cpp CglConicParam.hpp
+	config_cglconic.h \
+	CglConicConfig.h \
+	CglConicCutGenerator.hpp \
+	CglConicCutGenerator.cpp \
+	CglConicParam.hpp \
+	CglConicParam.cpp
 
 # This is for libtool (on Windows)
 libCglConic_la_LDFLAGS = $(LT_LDFLAGS)
@@ -67,10 +71,11 @@ endif
 includecoindir = $(includedir)/coin
 includecoin_HEADERS = \
 	CglConicCutGenerator.hpp \
-	CglConicParam.hpp
+	CglConicParam.hpp \
+
 
 install-exec-local:
-	$(install_sh_DATA) config_cglconic.h $(DESTDIR)$(includecoindir)/CglConicConfig.hpp
+	$(install_sh_DATA) config_cglconic.h $(DESTDIR)$(includecoindir)/CglConicConfig.h
 
 uninstall-local:
 	rm -f $(DESTDIR)$(includecoindir)/CglConicConfig.h

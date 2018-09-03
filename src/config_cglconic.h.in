@@ -1,4 +1,7 @@
-/* src/config_osiconic.h.in.  Generated from configure.ac by autoheader.  */
+/* src/config_cglconic.h.in.  Generated from configure.ac by autoheader.  */
+
+#ifndef __CONFIG_CGLCONIC_H__
+#define __CONFIG_CGLCONIC_H__
 
 /* Define to 1 if the CoinUtils package is available */
 #undef COIN_HAS_COINUTILS
@@ -86,3 +89,14 @@
 
 /* Version number of package */
 #undef VERSION
+
+/* Define to 64bit integer type */
+#undef COIN_INT64_T
+
+/* Define to integer type capturing pointer */
+#undef COIN_INTPTR_T
+
+/* Define to 64bit unsigned integer type */
+#undef COIN_UINT64_T
+
+#endif
