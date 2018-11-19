@@ -27,6 +27,7 @@ CglConicOA::CglConicOA(const CglConicOA & other) {
 // copy assignment operator
 CglConicOA & CglConicOA::operator=(const CglConicOA & rhs) {
   // copy param_
+  if (param_) delete param_;
   param_ = new CglConicOAParam(*(rhs.getParam()));
   return *this;
 }

@@ -4,7 +4,9 @@
 // CGL headers
 #include <CglParam.hpp>
 
-class CglConicParam: public CglParam {
+class CglConicParam: virtual public CglParam {
+public:
+  virtual ~CglConicParam() {}
 };
 
 #endif

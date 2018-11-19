@@ -60,10 +60,12 @@ CglConicIPM::CglConicIPM(const CglConicIPM & other) {
 // copy assignment operator
 CglConicIPM & CglConicIPM::operator=(const CglConicIPM & rhs) {
   // copy param_
+  if (param_) delete param_;
   param_ = new CglConicIPMParam(*(rhs.getParam()));
   // copy solver
   OsiConicSolverInterface * os = rhs.getSolver();
   if (os!=0) {
+    if (solver_) delete solver_;
     solver_ = new IPM_SOLVER(os);
     solver_->setHintParam(OsiDoReducePrint,true,OsiHintDo, 0);
   }
